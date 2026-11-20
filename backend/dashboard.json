@@ -1,0 +1,76 @@
+{
+	"trip": {
+		"title": "A day on the west coast",
+		"date": "24 October",
+		"pickup": "8:30 AM",
+		"meeting": "Your hotel, Flic en Flac",
+		"guestCount": 2,
+		"status": "Confirmed"
+	},
+	"categories": [
+		{
+			"label": "Water activities",
+			"icon": "waves"
+		},
+		{
+			"label": "Outdoors",
+			"icon": "mountain"
+		},
+		{
+			"label": "Romantic",
+			"icon": "heart"
+		},
+		{
+			"label": "Family-friendly",
+			"icon": "people"
+		},
+		{
+			"label": "Nightlife",
+			"icon": "moon"
+		}
+	],
+	"experiences": [
+		{
+			"id": "sunset",
+			"title": "Stay for the sunset",
+			"savedTitle": "Sunset on the lagoon",
+			"place": "West coast",
+			"duration": "2 hours",
+			"image": "sunset",
+			"categories": ["Water activities", "Romantic", "Nightlife"],
+			"description": "An unhurried evening on the lagoon. Watch the light change over the water, then take the long way back along the beach.",
+			"price": 1800,
+			"overview": "A slower end to the day.",
+			"alt": "A sailboat on the lagoon as the sun sets over the west coast",
+			"planIdea": "Stay for the sunset on the west coast of Mauritius."
+		},
+		{
+			"id": "waterfall",
+			"title": "Take the scenic route",
+			"savedTitle": "Take the scenic route",
+			"place": "Chamarel",
+			"duration": "Half day",
+			"image": "waterfall",
+			"categories": ["Outdoors", "Family-friendly"],
+			"description": "Follow the green heart of the island to Chamarel. Make time for the waterfall lookout, forest views and a relaxed lunch along the way.",
+			"price": 1600,
+			"overview": "A different side of Mauritius.",
+			"alt": "A waterfall cascading into a wooded gorge in Chamarel",
+			"planIdea": "Visit the waterfall lookout in Chamarel, Mauritius."
+		},
+		{
+			"id": "market",
+			"title": "A taste of the island",
+			"savedTitle": "A taste of the island",
+			"place": "Port Louis",
+			"duration": "3 hours",
+			"image": "market",
+			"categories": ["Family-friendly"],
+			"description": "Get to know the island through its markets. Browse the stalls, meet local makers and leave room for something delicious.",
+			"price": 1200,
+			"overview": "A different side of Mauritius.",
+			"alt": "Fruit stalls and shoppers outside the market in Port Louis",
+			"planIdea": "Explore the market in Port Louis, Mauritius."
+		}
+	]
+}
