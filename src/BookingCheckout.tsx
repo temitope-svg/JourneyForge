@@ -459,6 +459,14 @@ function ReviewRequest({
 					<SectionDisclosure title="Service terms — preview">
 						These sample screens demonstrate the request flow. They do not
 						create an agreement or a booking.
+						<Link
+							to="/terms"
+							target="_blank"
+							rel="noopener noreferrer"
+							className={`${textLink} mt-3 block w-fit`}
+						>
+							Read the Terms of service preview (opens in a new tab)
+						</Link>
 					</SectionDisclosure>
 				</div>
 				<form
@@ -652,11 +660,7 @@ function Payment({
 					</SectionDisclosure>
 				</form>
 			</BookingGrid>
-			<Link
-				to="/"
-				hash="help"
-				className={`${textLink} mx-auto mt-6 block w-fit`}
-			>
+			<Link to="/contact" className={`${textLink} mx-auto mt-6 block w-fit`}>
 				Need a hand? Contact Journey Forge
 			</Link>
 		</>

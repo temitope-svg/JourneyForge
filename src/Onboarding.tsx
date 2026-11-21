@@ -302,7 +302,7 @@ export default function Onboarding({ step }: { step: Step }) {
 					)}
 					<footer className="mt-8 flex justify-between gap-4 pb-4 text-xs text-ink/75">
 						<span>© 2026 Journey Forge</span>
-						<Link to="/" hash="help" className={textButton}>
+						<Link to="/help" className={textButton}>
 							Need a hand?
 						</Link>
 					</footer>

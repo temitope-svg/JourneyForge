@@ -1,8 +1,6 @@
-import { Link } from "@tanstack/react-router";
 import { type FormEvent, useRef, useState } from "react";
 import { z } from "zod";
 import { Arrow } from "./Arrow";
-import { getDemoSession, signOutOfDemo } from "./demoAuth";
 import {
 	destinations,
 	estimate,
@@ -12,6 +10,7 @@ import {
 	questions,
 	steps,
 } from "./homeContent";
+import { PublicFooter, PublicHeader } from "./PublicChrome";
 
 const sectionTitle =
 	"text-[clamp(2.6rem,9vw,4rem)] leading-[1.09] font-[750] tracking-[-0.065em] tablet:text-[clamp(3.2rem,5.64vw,5.75rem)]";
@@ -31,9 +30,6 @@ const activityCount =
 	"ml-[0.35rem] inline-grid size-[1.4rem] place-items-center rounded-full bg-sun text-[0.73rem] text-ink";
 const disclosure =
 	"flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden";
-
-const navigationItem =
-	"flex min-h-10 items-center border-r border-white/17 px-[0.55rem] text-[0.78rem] font-[650] tablet:min-h-[3.375rem] tablet:px-[clamp(0.65rem,1.4vw,1.35rem)] tablet:text-[0.81rem]";
 
 const asset = (name: string) => `/home/${name}`;
 const tripSchema = z
@@ -90,43 +86,7 @@ function SectionHeading({
 	);
 }
 
-const footerLinks = [
-	{
-		title: "Find your day",
-		links: [
-			["Explore destinations", "#destinations"],
-			["Plan a trip", "#plan"],
-			["How it works", "#how-it-works"],
-			["About us", "#about"],
-		],
-	},
-	{
-		title: "Here to help",
-		links: [
-			["Help & FAQ", "#help"],
-			["Contact", "Contact"],
-			["Safety", "Safety"],
-			["Accessibility", "Accessibility"],
-		],
-	},
-	{
-		title: "The details",
-		links: [
-			["Terms", "Terms"],
-			["Privacy", "Privacy"],
-			["Browser data", "Browser data"],
-			["Cancellations & refunds", "Cancellations & refunds"],
-		],
-	},
-];
-
 export default function App() {
-	const [demoSession, setDemoSession] = useState(getDemoSession);
-
-	function signOut() {
-		signOutOfDemo();
-		setDemoSession(null);
-	}
 	const [collection, setCollection] = useState(readCollection);
 	const [idea, setIdea] = useState(collection.draft);
 	const [feedback, setFeedback] = useState<{ text: string; error: boolean }>();
@@ -207,61 +167,7 @@ export default function App() {
 			>
 				Skip to content
 			</a>
-			<header
-				className="absolute top-4 left-1/2 z-1 flex w-page -translate-x-1/2 items-center justify-between gap-[0.65rem] text-white tablet:top-[1.7rem] tablet:items-start tablet:gap-4"
-				id="top"
-			>
-				<a href="#top" aria-label="Journey Forge home">
-					<img
-						className="h-auto w-[clamp(4.8rem,18vw,6rem)] tablet:w-[clamp(6.3rem,10.6vw,9.45rem)]"
-						src={asset("brand-light.png")}
-						width="151"
-						height="73"
-						alt=""
-					/>
-				</a>
-				<nav
-					className="flex flex-wrap justify-end bg-ink [&>:not(:last-child):hover]:bg-[#29443a]"
-					aria-label="Main navigation"
-				>
-					<a className={navigationItem} href="#destinations">
-						Explore
-					</a>
-					<a className={navigationItem} href="#how-it-works">
-						How it works
-					</a>
-					<a className={navigationItem} href="#saved">
-						Saved &amp; Recents
-					</a>
-					<a className={navigationItem} href="#help">
-						Help
-					</a>
-					{demoSession ? (
-						<>
-							<Link className={navigationItem} to="/dashboard">
-								Dashboard
-							</Link>
-							<button
-								type="button"
-								className={navigationItem}
-								onClick={signOut}
-							>
-								Sign out
-							</button>
-						</>
-					) : (
-						<Link className={navigationItem} to="/sign-in">
-							Sign in
-						</Link>
-					)}
-					<a
-						className={`${navigationItem} group justify-between gap-[0.45rem] bg-sun text-ink hover:bg-[#faf450] desktop:min-w-[10.75rem] tablet:gap-[1.1rem]`}
-						href="#plan"
-					>
-						Plan a trip <Arrow className="text-xs tablet:text-base" />
-					</a>
-				</nav>
-			</header>
+			<PublicHeader />
 			<main id="main">
 				<div className="bg-[#0a2229] bg-hero bg-cover bg-no-repeat bg-position-[55%_top] text-white tablet:bg-center">
 					<div className="mx-auto grid w-page items-end gap-6 pt-[clamp(13rem,55vw,19rem)] pb-[2.55rem] tablet:min-h-[clamp(48rem,70.175vw,68rem)] tablet:grid-cols-[minmax(0,1fr)_minmax(17rem,40%)] tablet:gap-[1.35rem] tablet:pt-36 tablet:pb-[clamp(3.3rem,4.9vw,5.25rem)] desktop:grid-cols-[minmax(0,1fr)_minmax(21rem,39%)] desktop:gap-[3.5%]">
@@ -720,7 +626,7 @@ export default function App() {
 								what to expect.
 							</p>
 							<a
-								href="#how-it-works"
+								href="/about"
 								className={`${textLink} mt-4 tablet:mt-[1.65rem]`}
 							>
 								About Journey Forge <Arrow />
@@ -756,69 +662,7 @@ export default function App() {
 					</span>
 				</a>
 			</main>
-			<footer className="bg-footer">
-				<div className="mx-auto w-page pt-[clamp(2.5rem,4.7vw,5rem)]">
-					<div className="grid grid-cols-2 gap-4 gap-y-[1.45rem] text-[0.9rem] tablet:grid-cols-[2.4fr_repeat(3,1fr)] tablet:gap-y-4">
-						<div>
-							<a href="#top" aria-label="Journey Forge home">
-								<img
-									className="h-auto w-32 tablet:w-[11.4rem]"
-									src={asset("brand-dark.png")}
-									width="184"
-									height="92"
-									alt=""
-									loading="lazy"
-								/>
-							</a>
-							<p className="mt-[1.4rem]">
-								For the days you’ll talk about for years.
-							</p>
-						</div>
-						{footerLinks.map(({ title, links }) => (
-							<div key={title}>
-								<h2 className="mb-3 leading-[1.09] font-[750]">{title}</h2>
-								<ul>
-									{links.map(([label, target]) => (
-										<li
-											className="my-[0.95rem] [&_a]:hover:underline [&_button]:hover:underline [&_a]:underline-offset-[0.15em] [&_button]:underline-offset-[0.15em]"
-											key={label}
-										>
-											{target.startsWith("#") ? (
-												<a href={target}>{label}</a>
-											) : (
-												<button
-													type="button"
-													className="text-left"
-													onClick={() => openDialog(target)}
-												>
-													{label}
-												</button>
-											)}
-										</li>
-									))}
-								</ul>
-							</div>
-						))}
-					</div>
-					<div className="flex items-center justify-between gap-4 pt-[clamp(1.65rem,3.75vw,4rem)] pb-4 text-[0.78rem]">
-						<span>© 2026 Journey Forge</span>
-						<a
-							className="inline-flex items-center gap-3 hover:underline hover:underline-offset-[0.15em]"
-							href="#top"
-						>
-							Back to top <Arrow up />
-						</a>
-					</div>
-				</div>
-				<img
-					className="h-auto w-full"
-					src={asset("footer-landscape.webp")}
-					alt=""
-					width="1425"
-					height="404"
-					loading="lazy"
-				/>
-			</footer>
+			<PublicFooter onInfo={openDialog} />
 
 			<dialog
 				ref={dialogRef}

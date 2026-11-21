@@ -239,17 +239,15 @@ export default function Account({
 							/>
 							<div>
 								<label htmlFor="account-terms">I agree to the</label>{" "}
-								<button
-									type="button"
+								<Link
+									to="/terms"
+									target="_blank"
+									rel="noopener noreferrer"
+									aria-label="Terms of service (opens in a new tab)"
 									className={textButton}
-									onClick={() =>
-										setNotice(
-											"Terms of service are unavailable in this preview.",
-										)
-									}
 								>
 									Terms of service
-								</button>
+								</Link>
 								.
 							</div>
 						</div>

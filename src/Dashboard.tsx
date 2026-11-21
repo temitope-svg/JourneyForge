@@ -239,7 +239,7 @@ export default function Dashboard({
 					>
 						<Icon name="message" className="size-5" />
 					</Link>
-					<Link to="/" hash="help" className="hover:text-ocean">
+					<Link to="/help" className="hover:text-ocean">
 						Help
 					</Link>
 					<Link

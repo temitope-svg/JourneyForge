@@ -31,12 +31,6 @@ const tabs: { id: ProfileTab; label: string; icon: IconName }[] = [
 	{ id: "privacy", label: "Privacy & account", icon: "lock" },
 ];
 const previews = {
-	Privacy:
-		"The demo stores profile changes and trip drafts in this browser. Browser data is separate for each demo sign-in. Use sample information here.",
-	Terms:
-		"Journey Forge is a design preview. Sample plans do not create agreements, bookings, or payment authorisations.",
-	Cancellations:
-		"Cancellation terms and refund estimates would be provided for a live booking before confirming a cancellation. This demo does not cancel bookings.",
 	"Delete your account":
 		"In a live account, deleting it would remove access to your profile and account history. This preview does not delete your demo account or browser data.",
 } as const;
@@ -53,7 +47,9 @@ export default function Profile({
 	const [draft, setDraft] = useState(saved);
 	const [notice, setNotice] = useState("");
 	const [problem, setProblem] = useState(false);
-	const [preview, setPreview] = useState<keyof typeof previews>("Privacy");
+	const [preview, setPreview] = useState<keyof typeof previews>(
+		"Delete your account",
+	);
 	const dialog = useRef<HTMLDialogElement>(null);
 	const title = tabs.find((item) => item.id === tab)?.label;
 
@@ -141,23 +137,16 @@ export default function Profile({
 					{tab === "privacy" ? (
 						<div className="mt-6 space-y-5">
 							<div className="grid gap-3 tablet:grid-cols-2">
-								{(["Privacy", "Terms", "Cancellations"] as const).map(
-									(item) => (
-										<button
-											key={item}
-											type="button"
-											onClick={() => show(item)}
-											className={lightButton}
-										>
-											{item}
-										</button>
-									),
-								)}
-								<Link
-									to="/"
-									hash="help"
-									className={`${lightButton} text-ocean`}
-								>
+								<Link to="/privacy" className={lightButton}>
+									Privacy
+								</Link>
+								<Link to="/terms" className={lightButton}>
+									Terms
+								</Link>
+								<Link to="/cancellations" className={lightButton}>
+									Cancellations
+								</Link>
+								<Link to="/help" className={`${lightButton} text-ocean`}>
 									Help &amp; support
 								</Link>
 							</div>

@@ -286,7 +286,7 @@ export function BookingBack({
 
 export function HelpLink({ children = "Get help" }: { children?: ReactNode }) {
 	return (
-		<Link to="/" hash="help" className={lightButton}>
+		<Link to="/contact" className={lightButton}>
 			{children}
 		</Link>
 	);

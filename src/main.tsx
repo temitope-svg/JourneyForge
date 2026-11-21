@@ -23,7 +23,9 @@ import App from "./App.tsx";
 import { bookingSteps } from "./bookingPreview";
 import Dashboard from "./Dashboard";
 import { getDemoSession } from "./demoAuth";
+import HowItWorks from "./HowItWorks";
 import Onboarding, { steps } from "./Onboarding";
+import PublicPages from "./PublicPages";
 import { profileTabs } from "./profileModel";
 import type { SampleRequest } from "./sampleTrips";
 import { tripSetupSteps } from "./tripDraft";
@@ -349,9 +351,72 @@ const unreadNotificationsRoute = createRoute({
 	component: () => <Dashboard notificationView="unread" />,
 });
 
+const howItWorksRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/how-it-works",
+	component: HowItWorks,
+});
+
+const helpRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/help",
+	component: () => <PublicPages page="help" />,
+});
+
+const aboutRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/about",
+	component: () => <PublicPages page="about" />,
+});
+
+const contactRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/contact",
+	component: () => <PublicPages page="contact" />,
+});
+
+const safetyRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/safety",
+	component: () => <PublicPages page="safety" />,
+});
+
+const cancellationsRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/cancellations",
+	component: () => <PublicPages page="cancellations" />,
+});
+
+const accessibilityRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/accessibility",
+	component: () => <PublicPages page="accessibility" />,
+});
+
+const privacyRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/privacy",
+	component: () => <PublicPages page="privacy" />,
+});
+
+const termsRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/terms",
+	component: () => <PublicPages page="terms" />,
+});
+
 const router = createRouter({
 	routeTree: rootRoute.addChildren([
 		indexRoute,
+		howItWorksRoute,
+		helpRoute,
+		aboutRoute,
+		contactRoute,
+		safetyRoute,
+		cancellationsRoute,
+		termsRoute,
+		privacyRoute,
+		accessibilityRoute,
 		signInRoute,
 		createAccountRoute,
 		verifyEmailRoute,

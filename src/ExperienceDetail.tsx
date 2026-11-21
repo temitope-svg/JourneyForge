@@ -157,8 +157,7 @@ export default function ExperienceDetail({
 						draft.
 					</p>
 					<Link
-						to="/"
-						hash="help"
+						to="/contact"
 						className="mt-4 inline-block text-sm text-ocean underline underline-offset-2"
 					>
 						Need a hand? Get in touch

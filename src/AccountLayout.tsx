@@ -63,7 +63,7 @@ export default function AccountLayout({
 					className={`mx-auto mt-auto flex w-full max-w-[34.75rem] items-center justify-between gap-4 pt-12 text-xs text-ink/75 ${flow ? "" : "desktop:mt-0 desktop:pt-[3.4rem]"}`}
 				>
 					<span>© 2026 Journey Forge</span>
-					<Link to="/" hash="help" className={textButton}>
+					<Link to="/help" className={textButton}>
 						Need a hand?
 					</Link>
 				</footer>
