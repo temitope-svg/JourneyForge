@@ -2,22 +2,17 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Arrow } from "./Arrow";
 import { inputStyle, textButton } from "./accountStyles";
+import { getDemoSession } from "./demoAuth";
+import {
+	travelStyles as companions,
+	interests,
+	languages,
+	readDemoProfile,
+	saveDemoProfile,
+} from "./profileModel";
 
 export const steps = ["interests", "travel", "preferences"] as const;
 type Step = (typeof steps)[number];
-const interests = [
-	"Food",
-	"Beaches",
-	"Nature",
-	"Adventure",
-	"Culture",
-	"Wellness",
-	"Romance",
-	"Family time",
-	"Nightlife",
-	"Luxury",
-];
-const companions = ["Solo", "With my partner", "With family", "With friends"];
 const titles = [
 	"What pulls you outside?",
 	"Who’s coming along?",
@@ -77,6 +72,29 @@ export default function Onboarding({ step }: { step: Step }) {
 	const [language, setLanguage] = useState("");
 	const [diet, setDiet] = useState("");
 	const [updates, setUpdates] = useState(false);
+	const [saveError, setSaveError] = useState("");
+
+	function finishSetup() {
+		const email = getDemoSession();
+		if (!email) {
+			void navigate({ to: "/sign-in" });
+			return;
+		}
+		const profile = readDemoProfile(email);
+		const saved = saveDemoProfile(email, {
+			...profile,
+			interests: interests.filter((item) => selectedInterests.includes(item)),
+			travelStyle: companions.find((item) => item === companion) ?? "",
+			diet,
+			accessibility,
+			language: languages.find((item) => item === language) ?? profile.language,
+		});
+		if (saved) void navigate({ to: "/dashboard" });
+		else
+			setSaveError(
+				"Preferences couldn’t be stored. You can retry or skip setup.",
+			);
+	}
 
 	function toggleInterest(interest: string, checked: boolean) {
 		setSelectedInterests((selected) =>
@@ -104,7 +122,6 @@ export default function Onboarding({ step }: { step: Step }) {
 							Skip setup
 						</Link>
 					</header>
-
 					<div className="mt-8">
 						<div className="flex gap-2" aria-hidden="true">
 							{steps.map((item, i) => (
@@ -124,7 +141,6 @@ export default function Onboarding({ step }: { step: Step }) {
 					<p className="mt-4 text-sm leading-relaxed text-ink/75">
 						{descriptions[index]}
 					</p>
-
 					{step === "interests" && (
 						<fieldset className="mt-8 grid min-w-0 grid-cols-2 gap-3 bg-paper p-3 tablet:grid-cols-5 tablet:p-4">
 							<legend className="sr-only">Interests</legend>
@@ -146,7 +162,6 @@ export default function Onboarding({ step }: { step: Step }) {
 							))}
 						</fieldset>
 					)}
-
 					{step === "travel" && (
 						<div className="mt-8">
 							<fieldset className="grid min-w-0 grid-cols-2 gap-3 bg-paper p-3 tablet:grid-cols-4 tablet:p-4">
@@ -202,7 +217,6 @@ export default function Onboarding({ step }: { step: Step }) {
 							</div>
 						</div>
 					)}
-
 					{step === "preferences" && (
 						<div className="mt-8">
 							<label
@@ -257,7 +271,6 @@ export default function Onboarding({ step }: { step: Step }) {
 							</label>
 						</div>
 					)}
-
 					<div className="mt-auto flex flex-wrap gap-3.5 pt-9">
 						{index > 0 && (
 							<Link
@@ -269,11 +282,7 @@ export default function Onboarding({ step }: { step: Step }) {
 							</Link>
 						)}
 						{step === "preferences" ? (
-							<button
-								type="button"
-								className={primary}
-								onClick={() => void navigate({ to: "/dashboard" })}
-							>
+							<button type="button" className={primary} onClick={finishSetup}>
 								Start exploring <Arrow />
 							</button>
 						) : (
@@ -285,7 +294,12 @@ export default function Onboarding({ step }: { step: Step }) {
 								Continue <Arrow />
 							</Link>
 						)}
-					</div>
+					</div>{" "}
+					{saveError && (
+						<p role="alert" className="mt-4 text-sm text-red-800">
+							{saveError}
+						</p>
+					)}
 					<footer className="mt-8 flex justify-between gap-4 pb-4 text-xs text-ink/75">
 						<span>© 2026 Journey Forge</span>
 						<Link to="/" hash="help" className={textButton}>

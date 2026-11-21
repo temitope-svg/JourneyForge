@@ -24,6 +24,7 @@ import { bookingSteps } from "./bookingPreview";
 import Dashboard from "./Dashboard";
 import { getDemoSession } from "./demoAuth";
 import Onboarding, { steps } from "./Onboarding";
+import { profileTabs } from "./profileModel";
 import type { SampleRequest } from "./sampleTrips";
 import { tripSetupSteps } from "./tripDraft";
 import { reviewSteps } from "./tripReviewModel";
@@ -255,7 +256,10 @@ const bookingRoute = createRoute({
 	): { sample?: SampleRequest; meeting?: "pickup" } => {
 		const { sample, meeting } = search;
 		return {
-			sample: sample === "sunset" || sample === "market" ? sample : undefined,
+			sample:
+				sample === "sunset" || sample === "market" || sample === "checkout"
+					? sample
+					: undefined,
 			meeting: meeting === "pickup" ? meeting : undefined,
 		};
 	},
@@ -277,7 +281,9 @@ function BookingRoute() {
 	return (
 		<Dashboard
 			bookingStep={bookingStep}
-			bookingSample={isSampleStage ? sample : undefined}
+			bookingSample={
+				isSampleStage || sample === "checkout" ? sample : undefined
+			}
 			bookingMeeting={bookingStep === "today" ? meeting : undefined}
 		/>
 	);
@@ -299,6 +305,49 @@ function TripReviewRoute() {
 	const { reviewStep } = tripReviewRoute.useRouteContext();
 	return <Dashboard reviewStep={reviewStep} />;
 }
+
+const profileIndexRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/profile",
+	beforeLoad: () => {
+		throw redirect({ to: "/profile/$tab", params: { tab: "personal" } });
+	},
+});
+
+const profileRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/profile/$tab",
+	beforeLoad: ({ params }) => {
+		if (!getDemoSession()) throw redirect({ to: "/sign-in" });
+		const tab = profileTabs.find((item) => item === params.tab);
+		if (!tab) throw notFound();
+		return { profileTab: tab };
+	},
+	component: ProfileRoute,
+});
+
+function ProfileRoute() {
+	const { profileTab } = profileRoute.useRouteContext();
+	return <Dashboard profileTab={profileTab} />;
+}
+
+const notificationsRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/notifications",
+	beforeLoad: () => {
+		if (!getDemoSession()) throw redirect({ to: "/sign-in" });
+	},
+	component: () => <Dashboard notificationView="all" />,
+});
+
+const unreadNotificationsRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/notifications/unread",
+	beforeLoad: () => {
+		if (!getDemoSession()) throw redirect({ to: "/sign-in" });
+	},
+	component: () => <Dashboard notificationView="unread" />,
+});
 
 const router = createRouter({
 	routeTree: rootRoute.addChildren([
@@ -325,6 +374,10 @@ const router = createRouter({
 		singleDayRoute,
 		bookingRoute,
 		tripReviewRoute,
+		profileIndexRoute,
+		profileRoute,
+		notificationsRoute,
+		unreadNotificationsRoute,
 	]),
 	scrollRestoration: true,
 });

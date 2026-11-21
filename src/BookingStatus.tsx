@@ -76,7 +76,13 @@ function ContactBlock() {
 	);
 }
 
-function RequestReceived({ preview }: { preview: BookingPreview }) {
+function RequestReceived({
+	preview,
+	sample,
+}: {
+	preview: BookingPreview;
+	sample?: SampleRequest;
+}) {
 	const { plan } = preview;
 	return (
 		<>
@@ -147,6 +153,7 @@ function RequestReceived({ preview }: { preview: BookingPreview }) {
 				<Link
 					to="/trips/booking/$step"
 					params={{ step: "confirmation-progress" }}
+					search={{ sample }}
 					className={`${blueButton} mt-5 w-full`}
 				>
 					View trip status <Icon name="next" className="size-4" />
@@ -878,7 +885,8 @@ export default function BookingStatus({
 }) {
 	if (step === "confirmed-trip") return <ConfirmedTrip />;
 	if (!preview) return null;
-	if (step === "request-received") return <RequestReceived preview={preview} />;
+	if (step === "request-received")
+		return <RequestReceived preview={preview} sample={sample} />;
 	if (step === "confirmation-progress")
 		return <ConfirmationProgress preview={preview} sample={sample} />;
 	return (

@@ -1,16 +1,21 @@
 import type { BookingPreview } from "./bookingPreview";
 
-export type SampleRequest = "sunset" | "market";
+export type SampleRequest = "sunset" | "market" | "checkout";
 
 export function sampleBookingAccount(email: string, request: SampleRequest) {
 	return `${email}:sample:${request}`;
 }
 
 export function sampleBooking(request: SampleRequest): BookingPreview {
-	const sunset = request === "sunset";
+	const sunset = request !== "market";
 	return {
 		plan: {
-			title: sunset ? "A sunset for two" : "A taste of the island",
+			title:
+				request === "checkout"
+					? "A slow day on the west coast."
+					: sunset
+						? "A sunset for two"
+						: "A taste of the island",
 			dayKey: sunset ? "2026-10-25" : "2026-10-28",
 			date: sunset ? "25 October 2026" : "28 October 2026",
 			travellers: "2 adults",
@@ -58,8 +63,22 @@ export function sampleBooking(request: SampleRequest): BookingPreview {
 			transport: 2400,
 			coordination: 800,
 		},
+		traveller:
+			request === "checkout"
+				? {
+						name: "Demo Traveller",
+						dialCode: "+230",
+						phone: "5550 1000",
+						pickup: "Sample Hotel, Flic en Flac",
+						meeting: "Main entrance",
+						needs: "",
+						otherNames: "",
+						emergencyName: "",
+						emergencyPhone: "",
+					}
+				: undefined,
 		reviewed: true,
-		authorised: true,
+		authorised: request !== "checkout",
 		decision: "pending",
 	};
 }

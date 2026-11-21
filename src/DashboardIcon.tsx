@@ -1,4 +1,8 @@
 const icons = {
+	info: "M12 11v6m0-10h.01m9 5a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
+	switch: "M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4",
+	message: "M4 5h16v12H9l-5 4V5Zm4 6h.01m4 0h.01m4 0h.01",
+	lock: "M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5V10Zm7 4v3",
 	wallet:
 		"M3 7V5a2 2 0 0 1 2-2h13v4m-13 0h15v13H5a2 2 0 0 1-2-2V7Zm15 4h2m-4 0h4v5h-4a2.5 2.5 0 0 1 0-5Z",
 	calendar:

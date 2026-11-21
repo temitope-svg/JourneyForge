@@ -76,12 +76,17 @@ export default function BookingFlow({
 		);
 	}
 
-	if (!sample && preview && step !== "confirmed-trip") {
+	if (
+		(!sample || sample === "checkout") &&
+		preview &&
+		step !== "confirmed-trip"
+	) {
 		if (step !== "traveller-details" && !preview.traveller) {
 			return (
 				<Navigate
 					to="/trips/booking/$step"
 					params={{ step: "traveller-details" }}
+					search={{ sample }}
 					replace
 				/>
 			);
@@ -95,6 +100,7 @@ export default function BookingFlow({
 				<Navigate
 					to="/trips/booking/$step"
 					params={{ step: "review-request" }}
+					search={{ sample }}
 					replace
 				/>
 			);
@@ -109,6 +115,7 @@ export default function BookingFlow({
 				<Navigate
 					to="/trips/booking/$step"
 					params={{ step: "payment" }}
+					search={{ sample }}
 					replace
 				/>
 			);
@@ -129,7 +136,12 @@ export default function BookingFlow({
 			step === "review-request" ||
 			step === "payment" ? (
 				preview && (
-					<BookingCheckout step={step} preview={preview} onAdvance={advance} />
+					<BookingCheckout
+						step={step}
+						preview={preview}
+						onAdvance={advance}
+						sample={sample}
+					/>
 				)
 			) : (
 				<BookingStatus

@@ -31,6 +31,7 @@ import {
 	travellerSchema,
 } from "./bookingPreview";
 import { Icon, type IconName } from "./DashboardIcon";
+import type { SampleRequest } from "./sampleTrips";
 
 type Advance = (step: BookingStep, updates: Partial<BookingPreview>) => void;
 const titles: Record<keyof TravellerDetails, string> = {
@@ -270,9 +271,11 @@ function zErrors(issues: { path: PropertyKey[]; message: string }[]) {
 
 function ReviewRequest({
 	preview,
+	sample,
 	onAdvance,
 }: {
 	preview: BookingPreview;
+	sample?: SampleRequest;
 	onAdvance: Advance;
 }) {
 	const { plan, traveller } = preview;
@@ -312,7 +315,7 @@ function ReviewRequest({
 				subtitle="Take one last look before moving to payment."
 				step={2}
 				back={
-					<BookingBack step="traveller-details">
+					<BookingBack step="traveller-details" sample={sample}>
 						Back to trip details
 					</BookingBack>
 				}
@@ -326,6 +329,7 @@ function ReviewRequest({
 								<Link
 									to="/trips/booking/$step"
 									params={{ step: "traveller-details" }}
+									search={{ sample }}
 									className={textLink}
 								>
 									Edit details
@@ -478,7 +482,7 @@ function ReviewRequest({
 					<div
 						className={`${section} mt-5 flex flex-wrap items-center justify-between gap-3`}
 					>
-						<BookingBack step="traveller-details">
+						<BookingBack step="traveller-details" sample={sample}>
 							Edit trip details
 						</BookingBack>
 						<button
@@ -497,9 +501,11 @@ function ReviewRequest({
 
 function Payment({
 	preview,
+	sample,
 	onAdvance,
 }: {
 	preview: BookingPreview;
+	sample?: SampleRequest;
 	onAdvance: Advance;
 }) {
 	const { plan } = preview;
@@ -532,7 +538,7 @@ function Payment({
 				subtitle="Preview the payment step before confirming your trip."
 				step={3}
 				back={
-					<BookingBack step="review-request">
+					<BookingBack step="review-request" sample={sample}>
 						Back to request review
 					</BookingBack>
 				}
@@ -659,16 +665,20 @@ function Payment({
 
 export default function BookingCheckout({
 	step,
+	sample,
 	preview,
 	onAdvance,
 }: {
 	step: "traveller-details" | "review-request" | "payment";
 	preview: BookingPreview;
+	sample?: SampleRequest;
 	onAdvance: Advance;
 }) {
 	if (step === "traveller-details")
 		return <TravellerDetailsPage preview={preview} onAdvance={onAdvance} />;
 	if (step === "review-request")
-		return <ReviewRequest preview={preview} onAdvance={onAdvance} />;
-	return <Payment preview={preview} onAdvance={onAdvance} />;
+		return (
+			<ReviewRequest preview={preview} onAdvance={onAdvance} sample={sample} />
+		);
+	return <Payment preview={preview} onAdvance={onAdvance} sample={sample} />;
 }

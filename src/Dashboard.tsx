@@ -4,16 +4,19 @@ import { z } from "zod";
 import data from "../backend/dashboard.json";
 import { type BookingStep, readBookingPreview } from "./bookingPreview";
 import { Icon, type IconName } from "./DashboardIcon";
-import { getDemoSession, signOutOfDemo } from "./demoAuth";
+import { getDemoSession } from "./demoAuth";
 import type { Experience } from "./ExperienceCard";
 import ExperienceDetail from "./ExperienceDetail";
 import { itineraryDays, itineraryEditsSchema } from "./itineraryModel";
+import { type ProfileTab, readDemoProfile } from "./profileModel";
 import type { SavedTab } from "./Saved";
 import type { SampleRequest } from "./sampleTrips";
 import type { TripSetupStep } from "./tripDraft";
 import { defaultTripDetails, tripDetailsSchema } from "./tripDraft";
 import type { ReviewStep } from "./tripReviewModel";
 
+const Notifications = lazy(() => import("./Notifications"));
+const Profile = lazy(() => import("./Profile"));
 const TripReview = lazy(() => import("./TripReview"));
 const MyTrips = lazy(() => import("./MyTrips"));
 const BookingFlow = lazy(() => import("./BookingFlow"));
@@ -25,11 +28,10 @@ const PlanProgress = lazy(() => import("./PlanProgress"));
 const TripItinerary = lazy(() => import("./TripItinerary"));
 const TripPlanner = lazy(() => import("./TripPlanner"));
 
-type Panel = "trip" | "pickup" | "profile" | "region";
+type Panel = "trip" | "pickup" | "region";
 const panelTitles: Record<Panel, string> = {
 	trip: "Your upcoming trip",
 	pickup: "Pickup details",
-	profile: "Your demo profile",
 	region: "Destination",
 };
 
@@ -74,6 +76,8 @@ export default function Dashboard({
 	bookingMeeting,
 	tripsView,
 	reviewStep,
+	profileTab,
+	notificationView,
 }: {
 	exploring?: boolean;
 	detail?: Experience;
@@ -87,11 +91,12 @@ export default function Dashboard({
 	bookingMeeting?: "pickup";
 	tripsView?: "default" | "sample";
 	reviewStep?: ReviewStep;
+	profileTab?: ProfileTab;
+	notificationView?: "all" | "unread";
 }) {
 	const navigate = useNavigate();
 	const email = getDemoSession() ?? "";
-	const name = email.split("@")[0].split(/[._+-]/)[0];
-	const displayName = name ? name[0].toUpperCase() + name.slice(1) : "Traveler";
+	const displayName = readDemoProfile(email).name.split(/\s+/)[0] || "Traveler";
 	const storageKey = `journey-forge:dashboard:${email}`;
 	const [dashboard, setDashboard] = useState(() => readDashboard(storageKey));
 	const [idea, setIdea] = useState(dashboard.draft);
@@ -207,13 +212,13 @@ export default function Dashboard({
 					>
 						Saved
 					</Link>
-					<button
-						type="button"
-						className="p-2 hover:text-ocean"
-						onClick={() => openPanel("profile")}
+					<Link
+						to="/profile/$tab"
+						params={{ tab: "personal" }}
+						className={`border-b-2 p-2 hover:text-ocean ${profileTab ? "border-ocean text-ocean" : "border-transparent"}`}
 					>
 						Profile
-					</button>
+					</Link>
 				</nav>
 				<div className="flex items-center gap-3 text-sm tablet:gap-6">
 					<button
@@ -227,21 +232,51 @@ export default function Dashboard({
 							className="ml-1 inline-block size-1.5 -translate-y-0.5 rotate-45 border-r border-b"
 						/>
 					</button>
+					<Link
+						to="/notifications"
+						aria-label="Notifications"
+						className="grid size-9 place-items-center rounded-full text-ocean hover:bg-[#e9f3ff] data-[status=active]:bg-[#e9f3ff]"
+					>
+						<Icon name="message" className="size-5" />
+					</Link>
 					<Link to="/" hash="help" className="hover:text-ocean">
 						Help
 					</Link>
-					<button
-						type="button"
+					<Link
+						to="/profile/$tab"
+						params={{ tab: "personal" }}
 						aria-label="Open demo profile"
-						onClick={() => openPanel("profile")}
 						className="grid size-11 place-items-center rounded-full border border-[#dbeaff] bg-[#e9f3ff] text-ocean"
 					>
 						{displayName[0]}
-					</button>
+					</Link>
 				</div>
 			</header>
 
-			{reviewStep ? (
+			{notificationView ? (
+				<Suspense
+					fallback={
+						<main className="mx-auto max-w-[100rem] p-8" aria-busy="true">
+							Loading notifications…
+						</main>
+					}
+				>
+					<Notifications
+						email={email}
+						unreadOnly={notificationView === "unread"}
+					/>
+				</Suspense>
+			) : profileTab ? (
+				<Suspense
+					fallback={
+						<main className="mx-auto max-w-[100rem] p-8" aria-busy="true">
+							Loading profile…
+						</main>
+					}
+				>
+					<Profile key={profileTab} tab={profileTab} email={email} />
+				</Suspense>
+			) : reviewStep ? (
 				<Suspense
 					fallback={
 						<main className="mx-auto max-w-[100rem] p-8" aria-busy="true">
@@ -736,21 +771,6 @@ export default function Dashboard({
 						<p className={`${muted} text-sm`}>
 							Sample pickup for the dashboard preview.
 						</p>
-					</div>
-				)}
-				{panel === "profile" && (
-					<div className="space-y-4">
-						<p className="wrap-anywhere">{email}</p>
-						<button
-							type="button"
-							className={primary}
-							onClick={() => {
-								signOutOfDemo();
-								void navigate({ to: "/sign-in", replace: true });
-							}}
-						>
-							Sign out
-						</button>
 					</div>
 				)}
 				{panel === "region" && (
