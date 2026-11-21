@@ -7,6 +7,7 @@ import {
 } from "./bookingPreview";
 import { Icon, type IconName } from "./DashboardIcon";
 import { currency } from "./itineraryModel";
+import type { SampleRequest } from "./sampleTrips";
 
 export const box = "rounded-2xl border border-[#dbeaff] bg-white";
 export const section = "border-t border-[#dbeaff] pt-5";
@@ -249,9 +250,11 @@ export function BookingHeader({
 
 export function BookingBack({
 	step,
+	sample,
 	children,
 }: {
 	step?: BookingStep;
+	sample?: SampleRequest;
 	children: ReactNode;
 }) {
 	const content = (
@@ -262,11 +265,20 @@ export function BookingBack({
 	);
 	const className = `${textLink} inline-flex items-center gap-2`;
 	return step ? (
-		<Link to="/trips/booking/$step" params={{ step }} className={className}>
+		<Link
+			to="/trips/booking/$step"
+			params={{ step }}
+			search={{ sample }}
+			className={className}
+		>
 			{content}
 		</Link>
 	) : (
-		<Link to="/trips" className={className}>
+		<Link
+			to="/trips"
+			search={{ view: sample ? "sample" : undefined }}
+			className={className}
+		>
 			{content}
 		</Link>
 	);

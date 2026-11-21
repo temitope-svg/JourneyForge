@@ -8,6 +8,11 @@ export const bookingSteps = [
 	"confirmation-progress",
 	"change-approval",
 	"confirmed-trip",
+	"change-trip",
+	"cancel-trip",
+	"today",
+	"trip-update",
+	"trip-help",
 ] as const;
 export type BookingStep = (typeof bookingSteps)[number];
 

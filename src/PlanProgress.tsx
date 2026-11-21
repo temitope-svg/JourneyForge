@@ -69,7 +69,10 @@ export default function PlanProgress({
 	return (
 		<main className="mx-auto max-w-[100rem] px-4 pt-6 pb-16 tablet:px-[clamp(2rem,4.05vw,4.25rem)] tablet:pt-9">
 			<nav aria-label="Breadcrumb" className="text-sm text-[#506582]">
-				<Link to="/trips" className="text-ocean underline underline-offset-2">
+				<Link
+					to="/trips/plan"
+					className="text-ocean underline underline-offset-2"
+				>
 					Plan a trip
 				</Link>{" "}
 				<span aria-hidden="true">/</span>{" "}
@@ -147,7 +150,7 @@ export default function PlanProgress({
 						>
 							{generating ? "View sample itinerary" : "View itinerary"}
 						</Link>
-						<Link to="/trips" className={outline}>
+						<Link to="/trips/plan" className={outline}>
 							Edit request
 						</Link>
 					</div>

@@ -24,7 +24,9 @@ import { bookingSteps } from "./bookingPreview";
 import Dashboard from "./Dashboard";
 import { getDemoSession } from "./demoAuth";
 import Onboarding, { steps } from "./Onboarding";
+import type { SampleRequest } from "./sampleTrips";
 import { tripSetupSteps } from "./tripDraft";
+import { reviewSteps } from "./tripReviewModel";
 import "./index.css";
 
 const rootRoute = createRootRoute({ component: Outlet });
@@ -152,6 +154,22 @@ const savedPlansRoute = createRoute({
 const tripsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/trips",
+	validateSearch: (search: Record<string, unknown>): { view?: "sample" } =>
+		search.view === "sample" ? { view: "sample" } : {},
+	beforeLoad: () => {
+		if (!getDemoSession()) throw redirect({ to: "/sign-in" });
+	},
+	component: MyTripsRoute,
+});
+
+function MyTripsRoute() {
+	const { view } = tripsRoute.useSearch();
+	return <Dashboard key={view ?? "default"} tripsView={view ?? "default"} />;
+}
+
+const tripPlannerRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/trips/plan",
 	beforeLoad: () => {
 		if (!getDemoSession()) throw redirect({ to: "/sign-in" });
 	},
@@ -232,6 +250,15 @@ function SingleDayRoute() {
 const bookingRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/trips/booking/$step",
+	validateSearch: (
+		search: Record<string, unknown>,
+	): { sample?: SampleRequest; meeting?: "pickup" } => {
+		const { sample, meeting } = search;
+		return {
+			sample: sample === "sunset" || sample === "market" ? sample : undefined,
+			meeting: meeting === "pickup" ? meeting : undefined,
+		};
+	},
 	beforeLoad: ({ params }) => {
 		if (!getDemoSession()) throw redirect({ to: "/sign-in" });
 		const step = bookingSteps.find((item) => item === params.step);
@@ -243,7 +270,34 @@ const bookingRoute = createRoute({
 
 function BookingRoute() {
 	const { bookingStep } = bookingRoute.useRouteContext();
-	return <Dashboard bookingStep={bookingStep} />;
+	const { sample, meeting } = bookingRoute.useSearch();
+	const isSampleStage =
+		bookingStep === "confirmation-progress" ||
+		bookingStep === "change-approval";
+	return (
+		<Dashboard
+			bookingStep={bookingStep}
+			bookingSample={isSampleStage ? sample : undefined}
+			bookingMeeting={bookingStep === "today" ? meeting : undefined}
+		/>
+	);
+}
+
+const tripReviewRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/trips/review/$step",
+	beforeLoad: ({ params }) => {
+		if (!getDemoSession()) throw redirect({ to: "/sign-in" });
+		const step = reviewSteps.find((item) => item === params.step);
+		if (!step) throw notFound();
+		return { reviewStep: step };
+	},
+	component: TripReviewRoute,
+});
+
+function TripReviewRoute() {
+	const { reviewStep } = tripReviewRoute.useRouteContext();
+	return <Dashboard reviewStep={reviewStep} />;
 }
 
 const router = createRouter({
@@ -263,12 +317,14 @@ const router = createRouter({
 		savedRoute,
 		savedPlansRoute,
 		tripsRoute,
+		tripPlannerRoute,
 		tripSetupRoute,
 		generatingRoute,
 		planReadyRoute,
 		tripItineraryRoute,
 		singleDayRoute,
 		bookingRoute,
+		tripReviewRoute,
 	]),
 	scrollRestoration: true,
 });

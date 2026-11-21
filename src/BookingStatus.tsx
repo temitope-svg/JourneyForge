@@ -17,14 +17,15 @@ import {
 	textLink,
 } from "./BookingLayout";
 import {
-	type BookingPlan,
 	type BookingPreview,
 	type BookingStep,
 	bookingAmounts,
 	bookingChange,
 } from "./bookingPreview";
+import { confirmedPlan, confirmedTotal } from "./confirmedSampleTrip";
 import { Icon, type IconName } from "./DashboardIcon";
 import { timeLabel } from "./itineraryChanges";
+import type { SampleRequest } from "./sampleTrips";
 
 type Advance = (step: BookingStep, changes: Partial<BookingPreview>) => void;
 const demoBadge =
@@ -161,7 +162,13 @@ function RequestReceived({ preview }: { preview: BookingPreview }) {
 	);
 }
 
-function ConfirmationProgress({ preview }: { preview: BookingPreview }) {
+function ConfirmationProgress({
+	preview,
+	sample,
+}: {
+	preview: BookingPreview;
+	sample?: SampleRequest;
+}) {
 	const { plan, decision, traveller } = preview;
 	const change = bookingChange(plan);
 	const pending = Boolean(change && decision === "pending");
@@ -217,7 +224,7 @@ function ConfirmationProgress({ preview }: { preview: BookingPreview }) {
 				title="Your day is taking shape."
 				subtitle="Follow the details as we confirm them."
 				request
-				back={<BookingBack>Back to trips</BookingBack>}
+				back={<BookingBack sample={sample}>Back to trips</BookingBack>}
 			/>
 			<BookingGrid
 				aside={
@@ -273,6 +280,7 @@ function ConfirmationProgress({ preview }: { preview: BookingPreview }) {
 						<Link
 							to="/trips/booking/$step"
 							params={{ step: "change-approval" }}
+							search={{ sample }}
 							className={blueButton}
 						>
 							Review change <Icon name="next" className="size-4" />
@@ -363,9 +371,11 @@ function ConfirmationProgress({ preview }: { preview: BookingPreview }) {
 function ChangeApproval({
 	preview,
 	onAdvance,
+	sample,
 }: {
 	preview: BookingPreview;
 	onAdvance: Advance;
+	sample?: SampleRequest;
 }) {
 	const { plan, decision } = preview;
 	const change = bookingChange(plan);
@@ -377,7 +387,7 @@ function ChangeApproval({
 				subtitle="You can return to your demo trip status."
 				request
 				back={
-					<BookingBack step="confirmation-progress">
+					<BookingBack step="confirmation-progress" sample={sample}>
 						Back to trip status
 					</BookingBack>
 				}
@@ -417,7 +427,7 @@ function ChangeApproval({
 				subtitle="Review the new sailing time and price before we continue."
 				request
 				back={
-					<BookingBack step="confirmation-progress">
+					<BookingBack step="confirmation-progress" sample={sample}>
 						Back to trip status
 					</BookingBack>
 				}
@@ -580,17 +590,6 @@ function ChangeApproval({
 	);
 }
 
-const confirmedPlan: BookingPlan = {
-	title: "A slow day on the west coast.",
-	dayKey: "2026-10-23",
-	date: "23 October 2026",
-	travellers: "2 adults",
-	guestCount: 2,
-	start: "Flic en Flac",
-	activities: [],
-	transport: 2400,
-	coordination: 800,
-};
 const confirmedStops: [string, IconName, string, string][] = [
 	[
 		"08:30",
@@ -606,35 +605,17 @@ const confirmedStops: [string, IconName, string, string][] = [
 ];
 
 function ConfirmedTrip() {
-	const [action, setAction] = useState<
-		"preview" | "updates" | "directions" | "receipt" | "share" | "change"
-	>("preview");
+	const [action, setAction] = useState<"receipt" | "share">("receipt");
 	const [copyStatus, setCopyStatus] = useState("");
 	const dialog = useRef<HTMLDialogElement>(null);
 	const shareSummary =
 		"Journey Forge sample trip: a slow day on the west coast of Mauritius. 23 October 2026, 08:30–19:15. This is a demo.";
 	const panels = {
-		preview: [
-			"Preview your day",
-			"Meet at the hotel entrance at 08:30. Your sample itinerary wraps up at 19:15.",
-		],
-		updates: [
-			"Sample updates",
-			"The example sunset sailing now departs at 16:30. Your return is scheduled for 19:15.",
-		],
-		directions: [
-			"Meeting point",
-			"Meet at the main entrance of your hotel in Flic en Flac. The coordinator would provide exact directions before the trip.",
-		],
 		receipt: [
 			"Sample receipt",
 			"Trip JF-1023 · MUR 10,400 · Paid in the demo. No real payment was made.",
 		],
 		share: ["Share summary", shareSummary],
-		change: [
-			"Cancel or request a change",
-			"This is a sample trip. For a live booking, your coordinator would help you review changes or cancellation conditions.",
-		],
 	} as const;
 
 	function show(next: typeof action) {
@@ -676,22 +657,28 @@ function ConfirmedTrip() {
 				</div>
 			</div>
 			<div className="mt-6 flex flex-wrap gap-2.5">
-				<button
-					type="button"
+				<Link
+					to="/trips/booking/$step"
+					params={{ step: "today" }}
 					className={blueButton}
-					onClick={() => show("preview")}
 				>
 					<Icon name="sun" className="size-4" />
 					Preview your day
-				</button>
-				<button
-					type="button"
+				</Link>
+				<Link
+					to="/trips/booking/$step"
+					params={{ step: "trip-update" }}
 					className={lightButton}
-					onClick={() => show("updates")}
 				>
 					Sample updates
-				</button>
-				<HelpLink>I need help</HelpLink>
+				</Link>
+				<Link
+					to="/trips/booking/$step"
+					params={{ step: "trip-help" }}
+					className={lightButton}
+				>
+					I need help
+				</Link>
 			</div>
 			<BookingGrid
 				aside={
@@ -711,19 +698,20 @@ function ConfirmedTrip() {
 								<div>
 									<p className="font-semibold">Meeting point</p>
 									<p className={`${muted} mt-2`}>Main hotel entrance</p>
-									<button
-										type="button"
-										className={`${textLink} mt-3`}
-										onClick={() => show("directions")}
+									<Link
+										to="/trips/booking/$step"
+										params={{ step: "today" }}
+										search={{ meeting: "pickup" }}
+										className={`${textLink} mt-3 inline-block`}
 									>
 										View directions
-									</button>
+									</Link>
 								</div>
 							</div>
 						</div>
 						<p className={`${section} flex justify-between gap-2 text-sm`}>
 							<span>Confirmed total</span>
-							<strong>{money(10400)}</strong>
+							<strong>{money(confirmedTotal)}</strong>
 						</p>
 						<div className={section}>
 							<p className="flex justify-between gap-2 text-sm">
@@ -748,7 +736,13 @@ function ConfirmedTrip() {
 							<p className={`${muted} mt-2 mb-3 text-sm`}>
 								Sample support contact
 							</p>
-							<HelpLink>Contact Journey Forge</HelpLink>
+							<Link
+								to="/trips/booking/$step"
+								params={{ step: "trip-help" }}
+								className={lightButton}
+							>
+								Contact Journey Forge
+							</Link>
 						</div>
 					</BookingCard>
 				}
@@ -801,13 +795,13 @@ function ConfirmedTrip() {
 							</p>
 						</div>
 					</div>
-					<button
-						type="button"
-						className={`${textLink} mt-5 underline underline-offset-2`}
-						onClick={() => show("change")}
+					<Link
+						to="/trips/booking/$step"
+						params={{ step: "change-trip" }}
+						className={`${textLink} mt-5 inline-block underline underline-offset-2`}
 					>
 						Cancel or request a change
-					</button>
+					</Link>
 				</div>
 			</BookingGrid>
 
@@ -871,6 +865,7 @@ export default function BookingStatus({
 	step,
 	preview,
 	onAdvance,
+	sample,
 }: {
 	step:
 		| "request-received"
@@ -879,11 +874,14 @@ export default function BookingStatus({
 		| "confirmed-trip";
 	preview?: BookingPreview;
 	onAdvance: Advance;
+	sample?: SampleRequest;
 }) {
 	if (step === "confirmed-trip") return <ConfirmedTrip />;
 	if (!preview) return null;
 	if (step === "request-received") return <RequestReceived preview={preview} />;
 	if (step === "confirmation-progress")
-		return <ConfirmationProgress preview={preview} />;
-	return <ChangeApproval preview={preview} onAdvance={onAdvance} />;
+		return <ConfirmationProgress preview={preview} sample={sample} />;
+	return (
+		<ChangeApproval preview={preview} onAdvance={onAdvance} sample={sample} />
+	);
 }

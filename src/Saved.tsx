@@ -8,7 +8,7 @@ const tabLink =
 	"min-h-12 border-b-2 border-transparent px-4 py-4 text-sm text-ocean hover:bg-[#e9f3ff] aria-[current=page]:border-ocean aria-[current=page]:font-bold";
 const primary =
 	"inline-flex min-h-11 items-center justify-center gap-3 rounded-lg bg-ocean px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0018c9]";
-const planLink = { to: "/trips" } as const;
+const planLink = { to: "/trips/plan" } as const;
 
 export default function Saved({
 	tab,

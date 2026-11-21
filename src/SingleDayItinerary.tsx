@@ -132,7 +132,7 @@ export default function SingleDayItinerary({
 	return (
 		<main className="mx-auto max-w-[100rem] px-4 pt-5 pb-12 tablet:px-8">
 			<Link
-				to="/trips"
+				to="/trips/plan"
 				className="inline-flex items-center gap-2 text-sm text-ocean hover:underline"
 			>
 				<Icon name="next" className="size-4 rotate-180" />
@@ -163,7 +163,7 @@ export default function SingleDayItinerary({
 				</div>
 				<p className="flex flex-wrap items-center gap-4 text-xs">
 					<Link
-						to="/trips"
+						to="/trips/plan"
 						className={`${muted} inline-flex items-center gap-2 hover:text-ocean`}
 					>
 						<Icon

@@ -131,7 +131,7 @@ export default function TripSetup({
 				),
 			})
 		) {
-			void navigate({ to: "/trips", replace: true });
+			void navigate({ to: "/trips/plan", replace: true });
 		} else {
 			setError(
 				"Your day preferences could not be saved to browser storage. You can retry here.",
@@ -142,7 +142,7 @@ export default function TripSetup({
 	return (
 		<main className="mx-auto max-w-[84rem] px-4 pt-6 pb-16 tablet:px-8 tablet:pt-8">
 			<Link
-				to="/trips"
+				to="/trips/plan"
 				className="inline-flex items-center gap-2 text-sm text-ocean underline underline-offset-2"
 			>
 				<Icon name="next" className="size-4 rotate-180" /> Back to your details
@@ -394,7 +394,7 @@ export default function TripSetup({
 					)}
 					<div className="mt-6 flex flex-wrap gap-3">
 						{index === 0 ? (
-							<Link to="/trips" className={outline}>
+							<Link to="/trips/plan" className={outline}>
 								Cancel
 							</Link>
 						) : (

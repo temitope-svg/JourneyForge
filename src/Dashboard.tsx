@@ -9,9 +9,13 @@ import type { Experience } from "./ExperienceCard";
 import ExperienceDetail from "./ExperienceDetail";
 import { itineraryDays, itineraryEditsSchema } from "./itineraryModel";
 import type { SavedTab } from "./Saved";
+import type { SampleRequest } from "./sampleTrips";
 import type { TripSetupStep } from "./tripDraft";
 import { defaultTripDetails, tripDetailsSchema } from "./tripDraft";
+import type { ReviewStep } from "./tripReviewModel";
 
+const TripReview = lazy(() => import("./TripReview"));
+const MyTrips = lazy(() => import("./MyTrips"));
 const BookingFlow = lazy(() => import("./BookingFlow"));
 const Saved = lazy(() => import("./Saved"));
 const SingleDayItinerary = lazy(() => import("./SingleDayItinerary"));
@@ -66,6 +70,10 @@ export default function Dashboard({
 	planStage,
 	selectedDay,
 	bookingStep,
+	bookingSample,
+	bookingMeeting,
+	tripsView,
+	reviewStep,
 }: {
 	exploring?: boolean;
 	detail?: Experience;
@@ -75,6 +83,10 @@ export default function Dashboard({
 	planStage?: "generating" | "ready" | "itinerary" | "single-day";
 	selectedDay?: string;
 	bookingStep?: BookingStep;
+	bookingSample?: SampleRequest;
+	bookingMeeting?: "pickup";
+	tripsView?: "default" | "sample";
+	reviewStep?: ReviewStep;
 }) {
 	const navigate = useNavigate();
 	const email = getDemoSession() ?? "";
@@ -130,7 +142,7 @@ export default function Dashboard({
 
 		const stored = update({ ...dashboard, draft: result.data });
 		if (openPlanner && stored) {
-			void navigate({ to: "/trips" });
+			void navigate({ to: "/trips/plan" });
 		}
 		return stored
 			? "Experience saved to your trip draft."
@@ -146,7 +158,7 @@ export default function Dashboard({
 			return;
 		}
 		if (update({ ...dashboard, draft: result.data })) {
-			void navigate({ to: "/trips" });
+			void navigate({ to: "/trips/plan" });
 		} else {
 			setNotice(
 				"Browser storage is unavailable. Copy this idea before continuing to Trips.",
@@ -229,7 +241,33 @@ export default function Dashboard({
 				</div>
 			</header>
 
-			{bookingStep ? (
+			{reviewStep ? (
+				<Suspense
+					fallback={
+						<main className="mx-auto max-w-[100rem] p-8" aria-busy="true">
+							Loading trip review…
+						</main>
+					}
+				>
+					<TripReview email={email} step={reviewStep} />
+				</Suspense>
+			) : tripsView ? (
+				<Suspense
+					fallback={
+						<main className="mx-auto max-w-[100rem] p-8" aria-busy="true">
+							Loading your trips…
+						</main>
+					}
+				>
+					<MyTrips
+						view={tripsView}
+						email={email}
+						draft={dashboard.draft}
+						hasDraft={Boolean(dashboard.draft || dashboard.planner)}
+						request={readBookingPreview(email)}
+					/>
+				</Suspense>
+			) : bookingStep ? (
 				<Suspense
 					fallback={
 						<main className="mx-auto max-w-[100rem] p-8" aria-busy="true">
@@ -237,7 +275,13 @@ export default function Dashboard({
 						</main>
 					}
 				>
-					<BookingFlow key={bookingStep} step={bookingStep} email={email} />
+					<BookingFlow
+						key={`${bookingStep}:${bookingSample ?? "current"}:${bookingMeeting ?? ""}`}
+						step={bookingStep}
+						email={email}
+						sample={bookingSample}
+						meeting={bookingMeeting}
+					/>
 				</Suspense>
 			) : planStage ? (
 				<Suspense

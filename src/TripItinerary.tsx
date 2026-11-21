@@ -206,7 +206,7 @@ export default function TripItinerary({
 	return (
 		<main className="mx-auto max-w-[84rem] px-4 pt-6 pb-16 tablet:px-8 tablet:pt-8">
 			<Link
-				to="/trips"
+				to="/trips/plan"
 				className="inline-flex items-center gap-2 text-sm text-ocean underline underline-offset-2"
 			>
 				<Icon name="next" className="size-4 rotate-180" /> Back to your details

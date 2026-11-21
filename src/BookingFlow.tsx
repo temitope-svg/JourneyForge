@@ -9,22 +9,38 @@ import {
 	readBookingPreview,
 	writeBookingPreview,
 } from "./bookingPreview";
+import ChangeTrip from "./ChangeTrip";
+import {
+	type SampleRequest,
+	sampleBooking,
+	sampleBookingAccount,
+} from "./sampleTrips";
+import TravelDay from "./TravelDay";
 
 export default function BookingFlow({
 	step,
 	email,
+	sample,
+	meeting,
 }: {
 	step: BookingStep;
 	email: string;
+	sample?: SampleRequest;
+	meeting?: "pickup";
 }) {
 	const navigate = useNavigate();
-	const [preview, setPreview] = useState(() => readBookingPreview(email));
+	const storageAccount = sample ? sampleBookingAccount(email, sample) : email;
+	const [preview, setPreview] = useState(
+		() =>
+			readBookingPreview(storageAccount) ??
+			(sample ? sampleBooking(sample) : undefined),
+	);
 	const [notice, setNotice] = useState("");
 
 	function advance(next: BookingStep, changes: Partial<BookingPreview>) {
 		if (!preview) return;
 		const updated = { ...preview, ...changes };
-		if (!writeBookingPreview(email, updated)) {
+		if (!writeBookingPreview(storageAccount, updated)) {
 			setNotice(
 				"This tab couldn’t save the demo state. Enable browser storage to continue.",
 			);
@@ -32,8 +48,17 @@ export default function BookingFlow({
 		}
 		setPreview(updated);
 		setNotice("");
-		void navigate({ to: "/trips/booking/$step", params: { step: next } });
+		void navigate({
+			to: "/trips/booking/$step",
+			params: { step: next },
+			search: { sample },
+		});
 	}
+
+	if (step === "change-trip" || step === "cancel-trip")
+		return <ChangeTrip email={email} cancel={step === "cancel-trip"} />;
+	if (step === "today" || step === "trip-update" || step === "trip-help")
+		return <TravelDay step={step} email={email} meeting={meeting} />;
 
 	if (!preview && step !== "confirmed-trip") {
 		return (
@@ -51,7 +76,7 @@ export default function BookingFlow({
 		);
 	}
 
-	if (preview && step !== "confirmed-trip") {
+	if (!sample && preview && step !== "confirmed-trip") {
 		if (step !== "traveller-details" && !preview.traveller) {
 			return (
 				<Navigate
@@ -107,7 +132,12 @@ export default function BookingFlow({
 					<BookingCheckout step={step} preview={preview} onAdvance={advance} />
 				)
 			) : (
-				<BookingStatus step={step} preview={preview} onAdvance={advance} />
+				<BookingStatus
+					step={step}
+					preview={preview}
+					onAdvance={advance}
+					sample={sample}
+				/>
 			)}
 		</main>
 	);
