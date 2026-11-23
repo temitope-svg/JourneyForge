@@ -24,15 +24,21 @@ import { bookingSteps } from "./bookingPreview";
 import Dashboard from "./Dashboard";
 import { getDemoSession } from "./demoAuth";
 import HowItWorks from "./HowItWorks";
+import NotFoundPage from "./NotFoundPage";
 import Onboarding, { steps } from "./Onboarding";
 import PublicPages from "./PublicPages";
 import { profileTabs } from "./profileModel";
+import StatusPage from "./StatusPages";
 import type { SampleRequest } from "./sampleTrips";
 import { tripSetupSteps } from "./tripDraft";
 import { reviewSteps } from "./tripReviewModel";
+import UnavailablePage from "./UnavailablePage";
 import "./index.css";
 
-const rootRoute = createRootRoute({ component: Outlet });
+const rootRoute = createRootRoute({
+	component: Outlet,
+	notFoundComponent: NotFoundPage,
+});
 const indexRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/",
@@ -405,9 +411,44 @@ const termsRoute = createRoute({
 	component: () => <PublicPages page="terms" />,
 });
 
+const unavailableRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/unavailable",
+	component: UnavailablePage,
+});
+
+const maintenanceRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/maintenance",
+	component: () => <StatusPage status="maintenance" />,
+});
+
+const expiredSharedLinkRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/expired-shared-link",
+	component: () => <StatusPage status="expired" />,
+});
+
+const offlineRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/offline",
+	component: () => <StatusPage status="offline" />,
+});
+
+const accessDeniedRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/access-denied",
+	component: () => <StatusPage status="denied" />,
+});
+
 const router = createRouter({
 	routeTree: rootRoute.addChildren([
 		indexRoute,
+		unavailableRoute,
+		maintenanceRoute,
+		expiredSharedLinkRoute,
+		offlineRoute,
+		accessDeniedRoute,
 		howItWorksRoute,
 		helpRoute,
 		aboutRoute,

@@ -104,7 +104,55 @@
 		@apply cursor-pointer;
 	}
 
-	:where(a, button, summary, textarea):focus-visible {
+	:where(a, button, summary):focus-visible {
 		@apply outline-2 outline-offset-4;
+	}
+
+	:where(
+		input:not(
+			[type="checkbox"],
+			[type="radio"],
+			[type="range"],
+			[type="color"],
+			[type="file"],
+			[type="hidden"],
+			[type="button"],
+			[type="submit"],
+			[type="reset"],
+			[type="image"]
+		),
+		select,
+		textarea,
+		.field-shell
+	) {
+		@apply outline-2 -outline-offset-2 outline-transparent motion-safe:transition-[border-color,outline-color] motion-safe:duration-150 motion-safe:ease-out;
+	}
+
+	:where(
+		input:not(
+			[type="checkbox"],
+			[type="radio"],
+			[type="range"],
+			[type="color"],
+			[type="file"],
+			[type="hidden"],
+			[type="button"],
+			[type="submit"],
+			[type="reset"],
+			[type="image"]
+		):focus,
+		select:focus,
+		textarea:focus,
+		.field-shell:has(> input:focus)
+	) {
+		@apply border-ocean outline-ocean;
+	}
+
+	:where(input, select, textarea)[aria-invalid="true"]:focus {
+		@apply border-red-700 outline-red-700;
+	}
+
+	:where(.field-shell > input:focus) {
+		@apply outline-none;
 	}
 }

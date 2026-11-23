@@ -1,4 +1,6 @@
 const icons = {
+	account:
+		"M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM15 9a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm-9 9a6 6 0 0 1 12 0",
 	info: "M12 11v6m0-10h.01m9 5a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
 	switch: "M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4",
 	message: "M4 5h16v12H9l-5 4V5Zm4 6h.01m4 0h.01m4 0h.01",
@@ -20,6 +22,8 @@ const icons = {
 		"M2 21a6 6 0 0 1 12 0m-6-9a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8 2a6 6 0 0 1 6 6M15 4a4 4 0 0 1 0 8",
 	moon: "M21 15A9 9 0 1 1 9 3a8 8 0 0 0 12 12Z",
 	check: "m8 12 3 3 5-6m5 3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
+	close: "m5 5 14 14M19 5 5 19",
+	retry: "M20 10a8 8 0 1 0-2.3 7.7M20 4v6h-6",
 	next: "M4 12h15m-6-6 6 6-6 6",
 };
 export type IconName = keyof typeof icons;

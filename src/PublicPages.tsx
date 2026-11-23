@@ -150,8 +150,17 @@ const darkButton = `${solid} bg-ink hover:bg-[#29443a]`;
 const blueButton = `${solid} bg-ocean hover:bg-[#0018c9]`;
 const textLink =
 	"group inline-flex items-center gap-6 border-b border-current pb-2 text-sm font-semibold hover:text-ocean";
-const field =
-	"mt-2 block min-h-14 w-full rounded-none border border-ink/40 bg-white px-4 py-3 text-base font-normal text-ink";
+const fieldBase =
+	"mt-2 min-h-14 w-full min-w-0 rounded-lg border border-ocean/45 bg-white px-4 py-3 text-base font-normal text-ink hover:border-ocean";
+const field = `${fieldBase} block`;
+const contactSelect = [
+	fieldBase,
+	"block cursor-pointer [color-scheme:light] required:invalid:text-ink/70",
+	"supports-[appearance:base-select]:flex supports-[appearance:base-select]:items-center supports-[appearance:base-select]:gap-2 supports-[appearance:base-select]:[appearance:base-select] [&::picker(select)]:[appearance:base-select]",
+	"[&::picker(select)]:mt-1 [&::picker(select)]:rounded-lg [&::picker(select)]:border [&::picker(select)]:border-ocean/25 [&::picker(select)]:bg-white [&::picker(select)]:p-1 [&::picker(select)]:shadow-lg",
+	"[&::picker-icon]:ml-auto [&::picker-icon]:shrink-0 [&::picker-icon]:text-ocean [&:open::picker-icon]:rotate-180",
+	"[&_option]:px-3 [&_option]:py-2.5 [&_option:checked]:bg-ocean [&_option:checked]:text-white [&_option:not(:checked):hover]:bg-ocean/10 [&_option:not(:checked):focus-visible]:bg-ocean/10 [&_option::checkmark]:order-last [&_option::checkmark]:ml-auto",
+].join(" ");
 
 function TripLink({
 	children,
@@ -325,7 +334,7 @@ function ContactForm() {
 			</p>
 			<form
 				method="post"
-				className="mt-8 grid gap-5"
+				className="mt-8 grid gap-x-5 gap-y-6 @min-[28rem]:grid-cols-2"
 				onChange={() => setStatus(undefined)}
 				onSubmit={(event) => {
 					event.preventDefault();
@@ -350,19 +359,38 @@ function ContactForm() {
 					});
 				}}
 			>
-				<label className="text-sm font-semibold">
+				<label className="min-w-0 text-sm font-semibold">
 					What’s your question about?
 					<select
 						value={kind}
 						onChange={(event) => setKind(event.target.value)}
-						className={field}
+						className={contactSelect}
 					>
 						<option>General question</option>
 						<option>A trip I’m planning</option>
 						<option>An existing trip</option>
 					</select>
 				</label>
-				<label className="text-sm font-semibold">
+				<label className="min-w-0 text-sm font-semibold">
+					Topic
+					<select
+						name="topic"
+						defaultValue=""
+						required
+						className={contactSelect}
+					>
+						<option value="" disabled>
+							Select a topic
+						</option>
+						<option>Planning</option>
+						<option>Prices & payment</option>
+						<option>Changes or cancellations</option>
+						<option>Safety & accessibility</option>
+						<option>Account & privacy</option>
+						<option>Something else</option>
+					</select>
+				</label>
+				<label className="min-w-0 text-sm font-semibold">
 					Name
 					<input
 						name="name"
@@ -372,7 +400,7 @@ function ContactForm() {
 						className={field}
 					/>
 				</label>
-				<label className="text-sm font-semibold">
+				<label className="min-w-0 text-sm font-semibold">
 					Email
 					<input
 						name="email"
@@ -384,43 +412,34 @@ function ContactForm() {
 					/>
 				</label>
 				{kind === "An existing trip" && (
-					<label className="text-sm font-semibold">
+					<label className="col-span-full min-w-0 text-sm font-semibold">
 						Trip reference <span className="font-normal">(optional)</span>
 						<input name="trip" maxLength={32} className={field} />
 					</label>
 				)}
-				<label className="text-sm font-semibold">
-					Topic
-					<select name="topic" defaultValue="" required className={field}>
-						<option value="">Select a topic</option>
-						<option>Planning</option>
-						<option>Prices & payment</option>
-						<option>Changes or cancellations</option>
-						<option>Safety & accessibility</option>
-						<option>Account & privacy</option>
-						<option>Something else</option>
-					</select>
-				</label>
-				<label className="text-sm font-semibold">
+				<label className="col-span-full min-w-0 text-sm font-semibold">
 					Message
 					<textarea
 						name="message"
 						required
 						maxLength={1200}
-						className={`${field} min-h-44`}
+						className={`${field} min-h-44 resize-none`}
 					/>
 				</label>
-				<p className="text-xs leading-relaxed">
+				<p className="col-span-full text-xs leading-relaxed">
 					Preview only. Messages are not sent. Please don’t include payment
 					details or sensitive information.
 				</p>
-				<button type="submit" className={`${blueButton} justify-self-start`}>
+				<button
+					type="submit"
+					className={`${blueButton} col-span-full justify-self-start`}
+				>
 					Send message <Arrow />
 				</button>
 				{status && (
 					<p
 						role={status.error ? "alert" : "status"}
-						className={`text-sm font-semibold ${status.error ? "text-red-800" : "text-ocean"}`}
+						className={`col-span-full text-sm font-semibold ${status.error ? "text-red-800" : "text-ocean"}`}
 					>
 						{status.text}
 					</p>

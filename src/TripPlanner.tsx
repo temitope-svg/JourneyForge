@@ -250,7 +250,7 @@ export default function TripPlanner({
 							<label htmlFor="planner-budget" className={label}>
 								Total budget
 							</label>
-							<div className="flex items-center rounded-[0.65rem] border border-[#92a5c1] focus-within:border-ocean">
+							<div className="field-shell flex items-center rounded-[0.65rem] border border-[#92a5c1]">
 								<input
 									id="planner-budget"
 									type="number"
