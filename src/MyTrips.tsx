@@ -6,7 +6,12 @@ import {
 	readBookingPreview,
 } from "./bookingPreview";
 import { Icon } from "./DashboardIcon";
-import { type SampleRequest, sampleBookingAccount } from "./sampleTrips";
+import {
+	paymentSamples,
+	type SampleRequest,
+	sampleBooking,
+	sampleBookingAccount,
+} from "./sampleTrips";
 
 const statuses = [
 	"Needs your approval",
@@ -14,6 +19,7 @@ const statuses = [
 	"Draft",
 	"Awaiting confirmation",
 	"Completed",
+	...paymentSamples.map(({ status }) => status),
 ] as const;
 type Status = (typeof statuses)[number];
 const groups = [
@@ -46,6 +52,10 @@ const badgeStyles: Record<Status, string> = {
 	Draft: "bg-[#e9f3ff] text-ocean",
 	"Awaiting confirmation": "bg-[#e9f3ff] text-ocean",
 	Completed: "bg-[#e9f3ff] text-ocean",
+	"Payment authorised": "bg-[#e5f7ed] text-[#175743]",
+	"Payment failed": "bg-[#fff1f3] text-[#852a3d]",
+	"Verification required": "bg-[#fff3d2] text-[#694c0f]",
+	"Price changed": "bg-[#fff3d2] text-[#694c0f]",
 };
 
 function TripStatusLink({
@@ -95,6 +105,32 @@ export default function MyTrips({
 		"pending";
 	const sampleApproval = sampleDecision === "pending";
 	const sampleTrips: TripRow[] = [
+		...paymentSamples.map(({ id, title, image, status }): TripRow => {
+			const { plan } = sampleBooking(id);
+			return {
+				id,
+				title,
+				details: `${plan.date} · ${plan.travellers} · Mauritius`,
+				note: "Demo payment scenario",
+				image,
+				group:
+					status === "Payment authorised"
+						? "Drafts and requests"
+						: "Needs your attention",
+				status,
+				action: (
+					<Link
+						to="/trips/booking/$step"
+						params={{ step: "payment" }}
+						search={{ sample: id }}
+						className={lightButton}
+						aria-label={`View payment preview for ${title}, ${status}`}
+					>
+						View payment preview <Icon name="next" className="size-4" />
+					</Link>
+				),
+			};
+		}),
 		{
 			id: "sunset",
 			title: "A sunset for two",
@@ -346,7 +382,8 @@ export default function MyTrips({
 											<Icon
 												name={
 													trip.status === "Confirmed" ||
-													trip.status === "Completed"
+													trip.status === "Completed" ||
+													trip.status === "Payment authorised"
 														? "check"
 														: "clock"
 												}

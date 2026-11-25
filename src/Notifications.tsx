@@ -186,9 +186,11 @@ const tabLink =
 export default function Notifications({
 	email,
 	unreadOnly,
+	emptyPreview = false,
 }: {
 	email: string;
 	unreadOnly: boolean;
+	emptyPreview?: boolean;
 }) {
 	const key = `journey-forge:notifications:${email}`;
 	const [read, setRead] = useState(
@@ -201,8 +203,10 @@ export default function Notifications({
 	);
 	const [feedback, setFeedback] = useState("");
 	const dialog = useRef<HTMLDialogElement>(null);
-	const unread = notices.filter(({ id }) => !read.includes(id));
-	const visible = unreadOnly ? unread : notices;
+	const inbox = emptyPreview ? [] : notices;
+	const search = emptyPreview ? { preview: "empty" as const } : {};
+	const unread = inbox.filter(({ id }) => !read.includes(id));
+	const visible = unreadOnly ? unread : inbox;
 
 	function update(next: string[], message: string) {
 		setRead(next);
@@ -252,15 +256,20 @@ export default function Notifications({
 					>
 						<Link
 							to="/notifications"
+							search={search}
 							activeOptions={{ exact: true }}
 							className={tabLink}
 						>
 							All{" "}
 							<span className="rounded-full bg-[#e9f3ff] px-2 py-1 text-xs">
-								{notices.length}
+								{inbox.length}
 							</span>
 						</Link>
-						<Link to="/notifications/unread" className={tabLink}>
+						<Link
+							to="/notifications/unread"
+							search={search}
+							className={tabLink}
+						>
 							Unread{" "}
 							<span className="rounded-full bg-[#e9f3ff] px-2 py-1 text-xs">
 								{unread.length}
@@ -273,7 +282,7 @@ export default function Notifications({
 						disabled={!unread.length}
 						onClick={() =>
 							update(
-								notices.map(({ id }) => id),
+								inbox.map(({ id }) => id),
 								"All notifications marked as read.",
 							)
 						}
@@ -336,18 +345,34 @@ export default function Notifications({
 						})}
 					</ul>
 				) : (
-					<div className="grid justify-items-center gap-4 p-10 text-center">
-						<Icon name="check" className="size-8 text-ocean" />
-						<h2 className="text-xl font-semibold">You’re all caught up.</h2>
+					<div className="grid justify-items-center gap-4 px-4 py-10 text-center tablet:py-14">
+						<span className="grid size-16 place-items-center rounded-full bg-[#e9f3ff] text-ocean">
+							<Icon name="check" className="size-8" />
+						</span>
+						<h2 className="text-2xl font-semibold tracking-tight">
+							{inbox.length ? "You’re all caught up." : "Nothing here yet."}
+						</h2>
 						<p className={`${muted} text-sm`}>
-							You have no unread notifications.
+							{inbox.length
+								? "You have no unread notifications."
+								: "Updates about your trips will appear here."}
 						</p>
-						<Link to="/notifications" className={lightButton}>
-							View all notifications
+						<Link
+							to={inbox.length ? "/notifications" : "/dashboard"}
+							className={lightButton}
+						>
+							{inbox.length ? "View all notifications" : "Back to home"}
 						</Link>
 					</div>
 				)}
 			</section>
+			<Link
+				to={unreadOnly ? "/notifications/unread" : "/notifications"}
+				search={emptyPreview ? {} : { preview: "empty" }}
+				className={`${textLink} mt-5 inline-block`}
+			>
+				{emptyPreview ? "Show sample notifications" : "Preview empty inbox"}
+			</Link>
 			<dialog
 				ref={dialog}
 				aria-labelledby="notification-title"

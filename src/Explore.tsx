@@ -27,6 +27,7 @@ export default function Explore({
 	const [category, setCategory] = useState("");
 	const [filters, setFilters] = useState(emptyFilters);
 	const [draftFilters, setDraftFilters] = useState(emptyFilters);
+	const searchInput = useRef<HTMLInputElement>(null);
 	const filterDialog = useRef<HTMLDialogElement>(null);
 	const activeFilterCount = Object.values(filters).filter(Boolean).length;
 	const [sort, setSort] = useState<SortOrder>("recommended");
@@ -66,6 +67,14 @@ export default function Explore({
 		filterDialog.current?.close();
 	}
 
+	function clearFilters() {
+		setQuery("");
+		setCategory("");
+		setFilters(emptyFilters);
+		setDraftFilters(emptyFilters);
+		searchInput.current?.focus();
+	}
+
 	return (
 		<main className="mx-auto max-w-[100rem] px-4 pt-6 pb-14 tablet:px-[clamp(2rem,4.05vw,4.25rem)] tablet:pt-9">
 			<nav aria-label="Breadcrumb" className="text-sm text-[#506582]">
@@ -100,6 +109,7 @@ export default function Explore({
 						Search experiences or places
 					</label>
 					<input
+						ref={searchInput}
 						id="experience-search"
 						type="search"
 						value={query}
@@ -178,20 +188,28 @@ export default function Explore({
 					))}
 				</div>
 			) : (
-				<div className="mt-4 rounded-2xl border border-[#dbeaff] bg-white p-8 text-center">
-					<p className="font-semibold">No experiences match your search.</p>
+				<section
+					aria-labelledby="no-experiences-title"
+					className="mt-4 rounded-2xl border border-[#dbeaff] bg-white px-5 py-12 text-center tablet:py-16"
+				>
+					<Icon name="bookmark" className="mx-auto size-12 text-ocean" />
+					<h2
+						id="no-experiences-title"
+						className="mt-6 text-[1.7rem] leading-tight font-semibold tracking-tight"
+					>
+						A little more room to explore.
+					</h2>
+					<p className="mt-4 leading-relaxed text-[#506582]">
+						Try a wider area, another search or a different budget.
+					</p>
 					<button
 						type="button"
-						className="mt-3 text-sm text-ocean underline underline-offset-4"
-						onClick={() => {
-							setQuery("");
-							setCategory("");
-							setFilters(emptyFilters);
-						}}
+						className="mt-6 min-h-12 rounded-[0.65rem] bg-ocean px-5 py-2 text-sm font-semibold text-white hover:bg-[#0018c9]"
+						onClick={clearFilters}
 					>
-						Clear search and filters
+						Clear filters
 					</button>
-				</div>
+				</section>
 			)}
 			<p className="mt-6 text-xs leading-relaxed text-[#506582]">
 				Illustrative experiences and prices. Dates, guests and availability are

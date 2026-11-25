@@ -4,6 +4,7 @@ import {
 	type FormEvent,
 	type ReactElement,
 	useId,
+	useRef,
 	useState,
 } from "react";
 import {
@@ -31,7 +32,7 @@ import {
 	travellerSchema,
 } from "./bookingPreview";
 import { Icon, type IconName } from "./DashboardIcon";
-import type { SampleRequest } from "./sampleTrips";
+import { findPaymentSample, type SampleRequest } from "./sampleTrips";
 
 type Advance = (step: BookingStep, updates: Partial<BookingPreview>) => void;
 const titles: Record<keyof TravellerDetails, string> = {
@@ -507,6 +508,51 @@ function ReviewRequest({
 	);
 }
 
+const paymentResponses = [
+	{
+		id: "approved",
+		label: "Successful authorisation",
+		title: "Preview: authorisation approved",
+		message:
+			"No money was held or charged. No trip request was sent, and nothing is booked.",
+		tone: "border-[#a2d4c3] bg-[#edf8f3] text-[#175743]",
+	},
+	{
+		id: "declined",
+		label: "Card declined",
+		title: "Preview: payment failed",
+		message:
+			"No money moved. In the live service you could retry or use another method.",
+		tone: "border-[#e7b5bf] bg-[#fff1f3] text-[#852a3d]",
+	},
+	{
+		id: "verification",
+		label: "Bank verification required",
+		title: "Preview: bank verification required",
+		message:
+			"A live payment would continue through your bank’s verification screen. Use the demo button below to complete this preview.",
+		tone: "border-[#deca89] bg-[#fff8e2] text-[#634507]",
+	},
+	{
+		id: "price-changed",
+		label: "Price changed",
+		title: "Preview: price changed",
+		message:
+			"A changed price must return to review before authorisation. The demo price and payment remain unchanged.",
+		tone: "border-[#deca89] bg-[#fff8e2] text-[#634507]",
+	},
+	{
+		id: "unavailable",
+		label: "Service unavailable",
+		title: "Preview: payment service unavailable",
+		message:
+			"The demo payment service is unavailable. Choose a payment response to try again.",
+		tone: "border-[#e7b5bf] bg-[#fff1f3] text-[#852a3d]",
+	},
+] as const;
+
+type PaymentResponse = (typeof paymentResponses)[number];
+
 function Payment({
 	preview,
 	sample,
@@ -518,25 +564,34 @@ function Payment({
 }) {
 	const { plan } = preview;
 	const { total } = bookingAmounts(plan);
-	const [response, setResponse] = useState<
-		"approved" | "declined" | "unavailable"
-	>("approved");
-	const [notice, setNotice] = useState("");
+	const example = findPaymentSample(sample);
+	const initialResult = paymentResponses.find(
+		({ id }) => id === example?.response,
+	);
+	const [response, setResponse] = useState<PaymentResponse>(
+		initialResult ?? paymentResponses[0],
+	);
+	const [result, setResult] = useState<PaymentResponse | undefined>(
+		initialResult,
+	);
+	const responsePicker = useRef<HTMLSelectElement>(null);
 	const demoField = `${field} bg-[#f5f8fc]! text-[#506582]`;
+	const blocked =
+		result?.id === "approved" ||
+		result?.id === "verification" ||
+		result?.id === "price-changed";
 
 	function authorise(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		if (response === "declined") {
-			setNotice(
-				"The demo card was declined. Choose a successful response to try again.",
-			);
-		} else if (response === "unavailable") {
-			setNotice(
-				"The demo payment service is unavailable. Choose a successful response to try again.",
-			);
-		} else {
-			onAdvance("request-received", { authorised: true, decision: "pending" });
-		}
+		if (!blocked) setResult(response);
+	}
+
+	function resetResponse() {
+		setResult(undefined);
+		const picker = responsePicker.current;
+		const disclosure = picker?.closest("details");
+		if (disclosure) disclosure.open = true;
+		picker?.focus();
 	}
 
 	return (
@@ -623,7 +678,11 @@ function Payment({
 						</p>
 					</section>
 					<div>
-						<button type="submit" className={`${blueButton} w-full`}>
+						<button
+							type="submit"
+							disabled={blocked}
+							className={`${blueButton} w-full`}
+						>
 							Preview authorisation · {money(total)}{" "}
 							<Icon name="next" className="size-4" />
 						</button>
@@ -631,33 +690,104 @@ function Payment({
 							No payment details are collected. Nothing is sent.
 						</p>
 					</div>
-					{notice && (
-						<p role="alert" className="text-sm text-red-800">
-							{notice}
-						</p>
-					)}
 					<SectionDisclosure title="Try a payment response">
 						<Field label="Demo response">
 							<select
-								value={response}
+								ref={responsePicker}
+								value={response.id}
 								className={field}
 								onChange={(event) => {
-									const value = event.target.value;
-									if (
-										value === "approved" ||
-										value === "declined" ||
-										value === "unavailable"
-									)
-										setResponse(value);
-									setNotice("");
+									const next = paymentResponses.find(
+										({ id }) => id === event.target.value,
+									);
+									if (next) {
+										setResponse(next);
+										setResult(undefined);
+									}
 								}}
 							>
-								<option value="approved">Successful authorisation</option>
-								<option value="declined">Card declined</option>
-								<option value="unavailable">Service unavailable</option>
+								{paymentResponses.map(({ id, label }) => (
+									<option key={id} value={id}>
+										{label}
+									</option>
+								))}
 							</select>
 						</Field>
 					</SectionDisclosure>
+					{result && (
+						<section
+							className={`rounded-xl border p-4 motion-safe:animate-response-arrival ${result.tone}`}
+						>
+							<div role="status">
+								<h3 className="font-semibold">{result.title}</h3>
+								<p className="mt-2 text-sm leading-relaxed">{result.message}</p>
+							</div>
+							<div className="mt-4 flex flex-wrap items-center gap-4">
+								{result.id === "approved" ? (
+									<>
+										<button
+											type="button"
+											className={blueButton}
+											onClick={() =>
+												onAdvance("request-received", {
+													authorised: true,
+													decision: "pending",
+												})
+											}
+										>
+											Continue to request preview
+										</button>
+										<button
+											type="button"
+											className={textLink}
+											onClick={resetResponse}
+										>
+											Try another response
+										</button>
+									</>
+								) : result.id === "verification" ? (
+									<>
+										<button
+											type="button"
+											className={blueButton}
+											onClick={() => setResult(paymentResponses[0])}
+										>
+											Complete demo verification
+										</button>
+										<button
+											type="button"
+											className={textLink}
+											onClick={resetResponse}
+										>
+											Cancel preview
+										</button>
+									</>
+								) : result.id === "price-changed" ? (
+									<button
+										type="button"
+										className={lightButton}
+										onClick={() =>
+											onAdvance("review-request", {
+												reviewed: false,
+												authorised: false,
+												decision: "pending",
+											})
+										}
+									>
+										Return to review
+									</button>
+								) : (
+									<button
+										type="button"
+										className={lightButton}
+										onClick={resetResponse}
+									>
+										Retry preview
+									</button>
+								)}
+							</div>
+						</section>
+					)}
 				</form>
 			</BookingGrid>
 			<Link to="/contact" className={`${textLink} mx-auto mt-6 block w-fit`}>

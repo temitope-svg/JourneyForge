@@ -18,6 +18,7 @@ import {
 	RecoveryEmailSent,
 	ResetPassword,
 	VerifyEmail,
+	validateResetSearch,
 } from "./AccountFlow";
 import App from "./App.tsx";
 import { bookingSteps } from "./bookingPreview";
@@ -28,8 +29,9 @@ import NotFoundPage from "./NotFoundPage";
 import Onboarding, { steps } from "./Onboarding";
 import PublicPages from "./PublicPages";
 import { profileTabs } from "./profileModel";
+import { OfflineSavedExample } from "./SharedStates";
 import StatusPage from "./StatusPages";
-import type { SampleRequest } from "./sampleTrips";
+import { findPaymentSample, type SampleRequest } from "./sampleTrips";
 import { tripSetupSteps } from "./tripDraft";
 import { reviewSteps } from "./tripReviewModel";
 import UnavailablePage from "./UnavailablePage";
@@ -78,8 +80,14 @@ const recoveryEmailSentRoute = createRoute({
 const resetPasswordRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/reset-password",
-	component: ResetPassword,
+	validateSearch: validateResetSearch,
+	component: ResetPasswordRoute,
 });
+
+function ResetPasswordRoute() {
+	const { status } = resetPasswordRoute.useSearch();
+	return <ResetPassword status={status} />;
+}
 
 const passwordResetSuccessRoute = createRoute({
 	getParentRoute: () => rootRoute,
@@ -106,11 +114,18 @@ function OnboardingRoute() {
 const dashboardRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/dashboard",
+	validateSearch: (search: Record<string, unknown>): { view?: "today" } =>
+		search.view === "today" ? { view: "today" } : {},
 	beforeLoad: () => {
 		if (!getDemoSession()) throw redirect({ to: "/sign-in" });
 	},
-	component: Dashboard,
+	component: DashboardHome,
 });
+
+function DashboardHome() {
+	const { view } = dashboardRoute.useSearch();
+	return <Dashboard dashboardView={view} />;
+}
 
 const exploreRoute = createRoute({
 	getParentRoute: () => rootRoute,
@@ -267,7 +282,7 @@ const bookingRoute = createRoute({
 			sample:
 				sample === "sunset" || sample === "market" || sample === "checkout"
 					? sample
-					: undefined,
+					: findPaymentSample(sample)?.id,
 			meeting: meeting === "pickup" ? meeting : undefined,
 		};
 	},
@@ -290,7 +305,9 @@ function BookingRoute() {
 		<Dashboard
 			bookingStep={bookingStep}
 			bookingSample={
-				isSampleStage || sample === "checkout" ? sample : undefined
+				isSampleStage || sample === "checkout" || findPaymentSample(sample)
+					? sample
+					: undefined
 			}
 			bookingMeeting={bookingStep === "today" ? meeting : undefined}
 		/>
@@ -339,23 +356,51 @@ function ProfileRoute() {
 	return <Dashboard profileTab={profileTab} />;
 }
 
+function validateNotificationSearch(search: Record<string, unknown>): {
+	preview?: "empty";
+} {
+	return search.preview === "empty" ? { preview: "empty" } : {};
+}
+
 const notificationsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/notifications",
+	validateSearch: validateNotificationSearch,
 	beforeLoad: () => {
 		if (!getDemoSession()) throw redirect({ to: "/sign-in" });
 	},
-	component: () => <Dashboard notificationView="all" />,
+	component: NotificationsRoute,
 });
 
 const unreadNotificationsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/notifications/unread",
+	validateSearch: validateNotificationSearch,
 	beforeLoad: () => {
 		if (!getDemoSession()) throw redirect({ to: "/sign-in" });
 	},
-	component: () => <Dashboard notificationView="unread" />,
+	component: UnreadNotificationsRoute,
 });
+
+function NotificationsRoute() {
+	const { preview } = notificationsRoute.useSearch();
+	return (
+		<Dashboard
+			notificationView="all"
+			emptyNotificationPreview={preview === "empty"}
+		/>
+	);
+}
+
+function UnreadNotificationsRoute() {
+	const { preview } = unreadNotificationsRoute.useSearch();
+	return (
+		<Dashboard
+			notificationView="unread"
+			emptyNotificationPreview={preview === "empty"}
+		/>
+	);
+}
 
 const howItWorksRoute = createRoute({
 	getParentRoute: () => rootRoute,
@@ -435,6 +480,12 @@ const offlineRoute = createRoute({
 	component: () => <StatusPage status="offline" />,
 });
 
+const offlineSavedExampleRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: "/offline/saved-example",
+	component: OfflineSavedExample,
+});
+
 const accessDeniedRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/access-denied",
@@ -448,6 +499,7 @@ const router = createRouter({
 		maintenanceRoute,
 		expiredSharedLinkRoute,
 		offlineRoute,
+		offlineSavedExampleRoute,
 		accessDeniedRoute,
 		howItWorksRoute,
 		helpRoute,

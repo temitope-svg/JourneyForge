@@ -11,6 +11,7 @@ import {
 } from "./bookingPreview";
 import ChangeTrip from "./ChangeTrip";
 import {
+	findPaymentSample,
 	type SampleRequest,
 	sampleBooking,
 	sampleBookingAccount,
@@ -77,7 +78,7 @@ export default function BookingFlow({
 	}
 
 	if (
-		(!sample || sample === "checkout") &&
+		(!sample || sample === "checkout" || findPaymentSample(sample)) &&
 		preview &&
 		step !== "confirmed-trip"
 	) {

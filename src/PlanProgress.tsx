@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "./DashboardIcon";
 import { itineraryDays, sampleIdea } from "./itineraryModel";
 import type { TripDetails } from "./tripDraft";
@@ -13,6 +13,36 @@ const phases = [
 	["Putting your route together", "Allowing room between stops."],
 	["Preparing your estimate", "Separating estimates from confirmed prices."],
 ];
+const progressViews = {
+	generating: {
+		title: "A good day is taking shape.",
+		description: "We’re shaping your idea into a suggested itinerary.",
+	},
+	ready: {
+		title: "Your preview is ready.",
+		description: "Review the sample itinerary and estimated cost.",
+	},
+	slow: {
+		title: "Still working on your day.",
+		description:
+			"In a connected service, you could leave and check progress from Trips.",
+	},
+	few: {
+		title: "Let’s give your day more room.",
+		description: "Try a wider area or a different budget.",
+	},
+	conflict: {
+		title: "A few details need a rethink.",
+		description: "Review the time available and your activity preferences.",
+	},
+	error: {
+		title: "We couldn’t finish your plan.",
+		description:
+			"Your saved details are unchanged. Retry the preview or edit your request.",
+	},
+};
+type ProgressView = keyof typeof progressViews;
+
 const primary =
 	"inline-flex min-h-12 items-center justify-center rounded-xl bg-ocean px-5 py-2 text-sm font-semibold text-white hover:bg-[#0018c9]";
 const outline =
@@ -29,11 +59,15 @@ export default function PlanProgress({
 }) {
 	const navigate = useNavigate();
 	const [phase, setPhase] = useState(1);
-	const [previewState, setPreviewState] = useState<"generating" | null>(null);
-	const generating = !ready || previewState === "generating";
+	const [previewState, setPreviewState] = useState<ProgressView | null>(null);
+	const view = previewState ?? (ready ? "ready" : "generating");
+	const generating = view === "generating";
+	const running = generating && !ready;
+	const { title, description } = progressViews[view];
+	const headingRef = useRef<HTMLHeadingElement>(null);
 
 	useEffect(() => {
-		if (ready) return;
+		if (!running) return;
 		const progress = window.setInterval(
 			() => setPhase((step) => Math.min(step + 1, phases.length - 1)),
 			1300,
@@ -45,7 +79,25 @@ export default function PlanProgress({
 			window.clearInterval(progress);
 			window.clearTimeout(completion);
 		};
-	}, [navigate, ready]);
+	}, [navigate, running]);
+
+	function selectView(next: ProgressView) {
+		if (next === "ready" && !ready) {
+			void navigate({ to: "/trips/ready" });
+			return;
+		}
+		setPreviewState(next);
+		if (next === "generating") setPhase(1);
+	}
+
+	function retryPreview() {
+		headingRef.current?.focus();
+		if (ready) {
+			void navigate({ to: "/trips/generating" });
+		} else {
+			selectView("generating");
+		}
+	}
 
 	const days = itineraryDays(details);
 	const dateLabel =
@@ -85,34 +137,30 @@ export default function PlanProgress({
 				<label className="flex flex-wrap items-center gap-2">
 					View state
 					<select
-						value={generating ? "generating" : "ready"}
-						onChange={(event) => {
-							if (event.target.value === "ready") {
-								setPreviewState(null);
-								if (!ready) void navigate({ to: "/trips/ready" });
-							} else {
-								setPreviewState("generating");
-							}
-						}}
+						value={view}
+						onChange={(event) => selectView(event.target.value as ProgressView)}
 						className="min-h-10 max-w-full rounded border border-[#92a5c1] bg-white px-2.5"
 					>
-						<option value="generating">A good day is taking shape.</option>
-						<option value="ready">Your preview is ready.</option>
+						{Object.entries(progressViews).map(([value, { title }]) => (
+							<option key={value} value={value}>
+								{title}
+							</option>
+						))}
 					</select>
 				</label>
 			</div>
 			<div className="mt-7 grid items-start gap-7 desktop:grid-cols-[2.04fr_1fr]">
 				<section className="min-w-0 pt-3">
-					<h1 className="text-[clamp(2.4rem,4vw,3.5rem)] leading-[1.05] font-semibold tracking-[-0.05em]">
-						{generating
-							? "A good day is taking shape."
-							: "Your preview is ready."}
-					</h1>
-					<p className="mt-4 leading-relaxed text-[#506582]">
-						{generating
-							? "We’re shaping your idea into a suggested itinerary."
-							: "Review the sample itinerary and estimated cost."}
-					</p>
+					<div aria-live="polite">
+						<h1
+							ref={headingRef}
+							tabIndex={-1}
+							className="text-[clamp(2.4rem,3.6vw,3.5rem)] leading-[1.05] font-semibold tracking-[-0.04em]"
+						>
+							{title}
+						</h1>
+						<p className="mt-4 leading-relaxed text-[#506582]">{description}</p>
+					</div>
 					{generating && (
 						<ol className="mt-12 grid gap-8">
 							{phases.map(([title, description], index) => (
@@ -144,11 +192,16 @@ export default function PlanProgress({
 					<div
 						className={`flex flex-wrap gap-3.5 ${generating ? "mt-12" : "mt-8"}`}
 					>
+						{view === "error" && (
+							<button type="button" onClick={retryPreview} className={primary}>
+								Retry preview
+							</button>
+						)}
 						<Link
 							to={days.length === 1 ? "/trips/single-day" : "/trips/itinerary"}
 							className={primary}
 						>
-							{generating ? "View sample itinerary" : "View itinerary"}
+							{view === "ready" ? "View itinerary" : "View sample itinerary"}
 						</Link>
 						<Link to="/trips/plan" className={outline}>
 							Edit request

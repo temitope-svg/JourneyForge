@@ -18,6 +18,7 @@ import {
 import { confirmedPlan, confirmedTotal } from "./confirmedSampleTrip";
 import { Icon } from "./DashboardIcon";
 import { timeLabel } from "./itineraryChanges";
+import { useTravelDayClock } from "./travelDayClock";
 import {
 	readTabValue,
 	travelStops,
@@ -28,6 +29,8 @@ import {
 } from "./travelDaySample";
 
 type Stage = "today" | "trip-update" | "trip-help";
+
+const beforePickupTime = 8 * 60 + 15;
 
 function TripLink({
 	step,
@@ -110,12 +113,24 @@ function SampleLine({ children }: { children: ReactNode }) {
 	);
 }
 
-function Today({ email, showPickup }: { email: string; showPickup: boolean }) {
-	const [clock, setClock] = useState(showPickup ? 495 : 585);
+function Today({
+	email,
+	showPickup,
+	liveClock,
+}: {
+	email: string;
+	showPickup: boolean;
+	liveClock: boolean;
+}) {
+	const [demoClock, setDemoClock] = useState(
+		showPickup ? beforePickupTime : 585,
+	);
+	const clock = useTravelDayClock(demoClock, liveClock);
 	const [meeting, setMeeting] = useState("");
 	const dialog = useRef<HTMLDialogElement>(null);
 	const next = travelStops.find((stop) => stop.end > clock);
 	const completed = travelStops.filter((stop) => stop.end <= clock);
+	const beforePickup = clock < travelStops[0].time;
 	const later = next ? travelStops.filter((stop) => stop.time > next.time) : [];
 	const read = updateReadIds(email);
 	const unread = tripUpdates.filter(
@@ -145,23 +160,32 @@ function Today({ email, showPickup }: { email: string; showPickup: boolean }) {
 				</div>
 				<TripLink step="trip-help">I need help</TripLink>
 			</div>
-			<label
-				className={`${muted} mt-4 flex flex-wrap items-center gap-2 text-xs`}
-			>
-				Sample day · Demo clock{" "}
-				<select
-					value={clock}
-					onChange={(event) => setClock(Number(event.target.value))}
-					className="min-h-9 rounded-md border border-[#c7d7ef] bg-white px-2 text-[#102040]"
+			{liveClock ? (
+				<p className={`${muted} mt-4 text-xs`}>
+					<time dateTime={timeLabel(clock)}>{timeLabel(clock)}</time> ·
+					Mauritius time
+				</p>
+			) : (
+				<label
+					className={`${muted} mt-4 flex flex-wrap items-center gap-2 text-xs`}
 				>
-					{[495, 530, 585, 610, 735, 975, 1155, 1170].map((minute) => (
-						<option key={minute} value={minute}>
-							{timeLabel(minute)}
-						</option>
-					))}
-				</select>{" "}
-				Mauritius time
-			</label>
+					Sample day · Demo clock{" "}
+					<select
+						value={demoClock}
+						onChange={(event) => setDemoClock(Number(event.target.value))}
+						className="min-h-9 rounded-md border border-[#c7d7ef] bg-white px-2 text-[#102040]"
+					>
+						{[beforePickupTime, 530, 585, 610, 735, 975, 1155, 1170].map(
+							(minute) => (
+								<option key={minute} value={minute}>
+									{timeLabel(minute)}
+								</option>
+							),
+						)}
+					</select>{" "}
+					Mauritius time
+				</label>
+			)}
 
 			<Layout
 				aside={
@@ -207,7 +231,10 @@ function Today({ email, showPickup }: { email: string; showPickup: boolean }) {
 			>
 				<section className="rounded-2xl border border-[#dbeaff] border-t-[4px] border-t-ocean bg-[#e9f3ff] p-5 tablet:p-7">
 					<div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-						<div className="flex items-center gap-3 font-semibold text-ocean">
+						<div
+							role="status"
+							className="flex items-center gap-3 font-semibold text-ocean"
+						>
 							{next ? (
 								<>
 									{clock < next.time ? "UP NEXT" : "NOW"} ·{" "}
@@ -223,7 +250,7 @@ function Today({ email, showPickup }: { email: string; showPickup: boolean }) {
 							)}
 						</div>
 						<p className="rounded-full bg-[#e5f7ed] px-3 py-1.5 text-[#175743]">
-							Sample day
+							{next ? "Sample day" : "Completed · demo"}
 						</p>
 					</div>
 					<div className="mt-6 flex items-start gap-4">
@@ -233,11 +260,10 @@ function Today({ email, showPickup }: { email: string; showPickup: boolean }) {
 						/>
 						<div>
 							<h2 className="text-[clamp(1.75rem,3vw,2.45rem)] leading-tight font-semibold tracking-tight">
-								{next?.title ?? "That’s a wrap."}
+								{next?.title ?? "A day to remember."}
 							</h2>
 							<p className={`${muted} mt-2 leading-relaxed`}>
-								{next?.copy ??
-									"You’ve reached the end of this sample itinerary."}
+								{next?.copy ?? "All sample steps are complete."}
 							</p>
 						</div>
 					</div>
@@ -249,7 +275,7 @@ function Today({ email, showPickup }: { email: string; showPickup: boolean }) {
 						</p>
 					)}
 					<div className="mt-5 flex flex-wrap gap-3">
-						{next && (
+						{next ? (
 							<button
 								type="button"
 								className={blueButton}
@@ -258,66 +284,79 @@ function Today({ email, showPickup }: { email: string; showPickup: boolean }) {
 								<Icon name="pin" className="size-4" />
 								View meeting details
 							</button>
+						) : (
+							<Link
+								to="/trips/booking/$step"
+								params={{ step: "confirmed-trip" }}
+								className={blueButton}
+							>
+								View your itinerary
+							</Link>
 						)}
-						<TripLink step="trip-help">I need help</TripLink>
+						{next && <TripLink step="trip-help">I need help</TripLink>}
 					</div>
-					<details className="group mt-6 border-t border-[#c7d7ef] pt-5">
-						<summary className="flex cursor-pointer list-none items-start gap-3 text-sm [&::-webkit-details-marker]:hidden">
-							<Icon name="check" className="size-5 shrink-0 text-[#175743]" />
-							<span className="flex-1 font-semibold">
-								{completed.length} completed{" "}
-								{completed.length === 1 ? "step" : "steps"}
-								{completed.length > 0 && (
-									<span className={`${muted} mt-1 block text-xs font-normal`}>
-										{completed.map((stop) => stop.title).join(" · ")}
-									</span>
-								)}
-							</span>
-							<span
-								aria-hidden="true"
-								className="mt-1 size-2 rotate-45 border-r border-b group-open:rotate-[225deg]"
-							/>
-						</summary>
-						{completed.length > 0 && (
-							<ul className="mt-4 grid gap-2 pl-8 text-sm">
-								{completed.map((stop) => (
-									<li key={stop.title}>
-										{timeLabel(stop.time)} · {stop.title}
+					{!beforePickup && (
+						<details className="group mt-6 border-t border-[#c7d7ef] pt-5">
+							<summary className="flex cursor-pointer list-none items-start gap-3 text-sm [&::-webkit-details-marker]:hidden">
+								<Icon name="check" className="size-5 shrink-0 text-[#175743]" />
+								<span className="flex-1 font-semibold">
+									{completed.length} completed{" "}
+									{completed.length === 1 ? "step" : "steps"}
+									{completed.length > 0 && (
+										<span className={`${muted} mt-1 block text-xs font-normal`}>
+											{completed.map((stop) => stop.title).join(" · ")}
+										</span>
+									)}
+								</span>
+								<span
+									aria-hidden="true"
+									className="mt-1 size-2 rotate-45 border-r border-b group-open:rotate-[225deg]"
+								/>
+							</summary>
+							{completed.length > 0 && (
+								<ul className="mt-4 grid gap-2 pl-8 text-sm">
+									{completed.map((stop) => (
+										<li key={stop.title}>
+											{timeLabel(stop.time)} · {stop.title}
+										</li>
+									))}
+								</ul>
+							)}
+						</details>
+					)}
+				</section>
+				{next && (
+					<section className={`${box} p-5 tablet:p-6`}>
+						<Heading>Later today</Heading>
+						{later.length ? (
+							<ol className="mt-4 divide-y divide-[#dbeaff] border-y border-[#dbeaff]">
+								{later.map((stop) => (
+									<li
+										key={stop.title}
+										className="grid grid-cols-[3.5rem_auto_1fr] items-start gap-3 py-4"
+									>
+										<time className={`${muted} pt-0.5 text-sm`}>
+											{timeLabel(stop.time)}
+										</time>
+										<Icon name={stop.icon} className="size-5 text-ocean" />
+										<div>
+											<p className="font-semibold">{stop.title}</p>
+											<p className={`${muted} mt-2 text-sm`}>{stop.copy}</p>
+										</div>
 									</li>
 								))}
-							</ul>
+							</ol>
+						) : (
+							<p className={`${muted} mt-4 text-sm`}>
+								There are no more stops after this.
+							</p>
 						)}
-					</details>
-				</section>
-				<section className={`${box} p-5 tablet:p-6`}>
-					<Heading>Later today</Heading>
-					{later.length ? (
-						<ol className="mt-4 divide-y divide-[#dbeaff] border-y border-[#dbeaff]">
-							{later.map((stop) => (
-								<li
-									key={stop.title}
-									className="grid grid-cols-[3.5rem_auto_1fr] items-start gap-3 py-4"
-								>
-									<time className={`${muted} pt-0.5 text-sm`}>
-										{timeLabel(stop.time)}
-									</time>
-									<Icon name={stop.icon} className="size-5 text-ocean" />
-									<div>
-										<p className="font-semibold">{stop.title}</p>
-										<p className={`${muted} mt-2 text-sm`}>{stop.copy}</p>
-									</div>
-								</li>
-							))}
-						</ol>
-					) : (
-						<p className={`${muted} mt-4 text-sm`}>
-							There are no more stops after this.
+						<p className={`${muted} mt-4 text-xs`}>
+							Sample timings. The update history records the earlier pickup
+							delay.
 						</p>
-					)}
-					<p className={`${muted} mt-4 text-xs`}>
-						Sample timings. The update history records the earlier pickup delay.
-					</p>
-				</section>
+					</section>
+				)}
 				<div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#e9f3ff] p-4 text-sm">
 					<div>
 						<p>Your sailing time is confirmed for 16:30.</p>
@@ -791,15 +830,21 @@ export default function TravelDay({
 	step,
 	email,
 	meeting,
+	liveClock = false,
 }: {
 	step: Stage;
 	email: string;
 	meeting?: "pickup";
+	liveClock?: boolean;
 }) {
 	return (
 		<main className="mx-auto max-w-[100rem] px-4 pt-6 pb-14 tablet:px-8">
 			{step === "today" ? (
-				<Today email={email} showPickup={meeting === "pickup"} />
+				<Today
+					email={email}
+					showPickup={meeting === "pickup"}
+					liveClock={liveClock}
+				/>
 			) : step === "trip-update" ? (
 				<TripUpdate email={email} />
 			) : (

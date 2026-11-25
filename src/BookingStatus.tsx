@@ -307,6 +307,14 @@ function ConfirmationProgress({
 									? "The proposed sailing and estimate are reflected here. The current demo request remains unconfirmed."
 									: "The original total stays the same. A coordinator would look for another option."}
 							</Callout>
+							<Link
+								to="/trips/booking/$step"
+								params={{ step: "change-approval" }}
+								search={{ sample }}
+								className={`${textLink} mt-3 inline-flex`}
+							>
+								View change decision
+							</Link>
 						</div>
 					)
 				)}
@@ -387,7 +395,7 @@ function ChangeApproval({
 	const { plan, decision } = preview;
 	const change = bookingChange(plan);
 	const { total } = bookingAmounts(plan);
-	if (!change || decision !== "pending")
+	if (!change)
 		return (
 			<BookingHeader
 				title="No change awaiting approval."
@@ -443,7 +451,7 @@ function ChangeApproval({
 				aside={
 					<BookingCard plan={plan}>
 						<div className={section}>
-							<h3 className="font-semibold">Your choice</h3>
+							<h3 className="font-semibold">The proposed change</h3>
 							<ul className={`${muted} mt-3 space-y-3 text-sm`}>
 								<li>
 									Later sailing:{" "}
@@ -493,8 +501,14 @@ function ChangeApproval({
 					<div>
 						<div className="flex flex-wrap items-center gap-3">
 							<Heading>Sunset sailing</Heading>
-							<span className="rounded-lg bg-sun px-3 py-1.5 text-xs font-semibold">
-								Approval needed
+							<span
+								className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${decision === "pending" ? "bg-sun" : "bg-[#e9f3ff] text-ocean"}`}
+							>
+								{decision === "approved"
+									? "Choice approved"
+									: decision === "declined"
+										? "Choice declined"
+										: "Approval needed"}
 							</span>
 						</div>
 						<p className={`${muted} mt-2 text-sm leading-relaxed`}>
@@ -504,8 +518,20 @@ function ChangeApproval({
 					</div>
 				</div>
 				<div className="my-5">
-					<Callout title="Our recommendation">
-						Take the later sailing and keep the rest of your day.
+					<Callout
+						title={
+							decision === "approved"
+								? "Change approved in this preview."
+								: decision === "declined"
+									? "Change declined in this preview."
+									: "Our recommendation"
+						}
+					>
+						{decision === "approved"
+							? `Your approved total is now ${money(total + change.increase)}. No extra amount was authorised or charged. Updated authorisation is still required before this trip can be confirmed.`
+							: decision === "declined"
+								? `Your approved total stays at ${money(total)}. Another option is needed and the trip remains unconfirmed. No cancellation or fee was applied.`
+								: "Take the later sailing and keep the rest of your day."}
 					</Callout>
 				</div>
 				<div className="overflow-hidden rounded-xl border border-[#dbeaff]">
@@ -559,7 +585,11 @@ function ChangeApproval({
 							<dd>+ {money(change.increase)}</dd>
 						</div>
 						<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#e9f3ff] px-3 py-4 font-semibold">
-							<dt>New total if approved</dt>
+							<dt>
+								{decision === "pending"
+									? "New total if approved"
+									: "Proposed total"}
+							</dt>
 							<dd className="text-xl">{money(total + change.increase)}</dd>
 						</div>
 					</dl>
@@ -568,30 +598,44 @@ function ChangeApproval({
 					This approval changes the demo estimate only. No extra amount is
 					authorised.
 				</p>
-				<div className="mt-5 grid gap-3 tablet:grid-cols-[1fr_1.3fr]">
-					<button
-						type="button"
-						className={lightButton}
-						onClick={() =>
-							onAdvance("confirmation-progress", { decision: "declined" })
-						}
+				{decision === "pending" ? (
+					<>
+						<div className="mt-5 grid gap-3 tablet:grid-cols-[1fr_1.3fr]">
+							<button
+								type="button"
+								className={lightButton}
+								onClick={() =>
+									onAdvance("change-approval", { decision: "declined" })
+								}
+							>
+								Decline change
+							</button>
+							<button
+								type="button"
+								className={blueButton}
+								onClick={() =>
+									onAdvance("change-approval", { decision: "approved" })
+								}
+							>
+								Approve change · + {money(change.increase)}{" "}
+								<Icon name="next" className="size-4" />
+							</button>
+						</div>
+						<p className={`${muted} mt-3 text-center text-xs`}>
+							If you decline, another option is needed. Your trip stays
+							unconfirmed.
+						</p>
+					</>
+				) : (
+					<Link
+						to="/trips/booking/$step"
+						params={{ step: "confirmation-progress" }}
+						search={{ sample }}
+						className={`${blueButton} mt-5 w-full`}
 					>
-						Decline change
-					</button>
-					<button
-						type="button"
-						className={blueButton}
-						onClick={() =>
-							onAdvance("confirmation-progress", { decision: "approved" })
-						}
-					>
-						Approve change · + {money(change.increase)}{" "}
-						<Icon name="next" className="size-4" />
-					</button>
-				</div>
-				<p className={`${muted} mt-3 text-center text-xs`}>
-					If you decline, another option is needed. Your trip stays unconfirmed.
-				</p>
+						Back to trip status <Icon name="next" className="size-4" />
+					</Link>
+				)}
 			</BookingGrid>
 		</>
 	);
@@ -611,19 +655,54 @@ const confirmedStops: [string, IconName, string, string][] = [
 	["19:15", "car", "Back at your hotel", ""],
 ];
 
+const receiptItems = [
+	["Coastal breakfast", 800],
+	["Lunch with a view", 2400],
+	["Sunset sailing", 4000],
+	["Private transport", confirmedPlan.transport + confirmedPlan.coordination],
+] as const;
+
+const shareSummary = [
+	"Journey Forge — a day in Mauritius",
+	`${confirmedPlan.date} · ${confirmedPlan.travellers}`,
+	"Activities and meeting details are kept private. Ask your organiser for what you need to know.",
+	"Sample trip. No booking or payment made.",
+].join("\n");
+
+const shareDownload = `data:text/plain;charset=utf-8,${encodeURIComponent(shareSummary)}`;
+
+function SampleReceipt() {
+	return (
+		<>
+			<p className={`${muted} text-xs`}>JF-1023 · {confirmedPlan.date}</p>
+			<dl className="mt-5 divide-y divide-[#dbeaff] border-t border-[#dbeaff] text-sm">
+				{receiptItems.map(([label, amount]) => (
+					<div key={label} className="flex justify-between gap-4 py-4">
+						<dt>{label}</dt>
+						<dd className="shrink-0 font-semibold tabular-nums">
+							{money(amount)}
+						</dd>
+					</div>
+				))}
+				<div className="flex justify-between gap-4 py-4">
+					<dt>Total · demo</dt>
+					<dd className="shrink-0 font-semibold tabular-nums">
+						{money(confirmedTotal)}
+					</dd>
+				</div>
+			</dl>
+			<p className={`${muted} mt-5 text-xs leading-relaxed`}>
+				Illustrative only. No money was held or charged. This is not a
+				transaction receipt.
+			</p>
+		</>
+	);
+}
+
 function ConfirmedTrip() {
 	const [action, setAction] = useState<"receipt" | "share">("receipt");
 	const [copyStatus, setCopyStatus] = useState("");
 	const dialog = useRef<HTMLDialogElement>(null);
-	const shareSummary =
-		"Journey Forge sample trip: a slow day on the west coast of Mauritius. 23 October 2026, 08:30–19:15. This is a demo.";
-	const panels = {
-		receipt: [
-			"Sample receipt",
-			"Trip JF-1023 · MUR 10,400 · Paid in the demo. No real payment was made.",
-		],
-		share: ["Share summary", shareSummary],
-	} as const;
 
 	function show(next: typeof action) {
 		setAction(next);
@@ -659,6 +738,7 @@ function ConfirmedTrip() {
 						onClick={() => show("share")}
 						className={lightButton}
 					>
+						<Icon name="share" className="size-4 text-ocean" />
 						Share summary
 					</button>
 				</div>
@@ -815,7 +895,7 @@ function ConfirmedTrip() {
 			<dialog
 				ref={dialog}
 				aria-labelledby="confirmed-dialog"
-				className="m-auto max-h-[90svh] w-[min(32rem,calc(100%-2rem))] overflow-auto rounded-2xl bg-white p-6 text-[#102040] shadow-xl backdrop:bg-[#172345]/50 motion-safe:open:animate-response-arrival"
+				className="m-auto max-h-[90svh] w-[min(32rem,calc(100%-2rem))] overflow-auto rounded-2xl bg-white p-6 text-[#102040] shadow-xl backdrop:bg-[#172345]/50 backdrop:backdrop-blur-xs motion-safe:open:animate-response-arrival tablet:p-8"
 			>
 				<form
 					method="dialog"
@@ -825,7 +905,9 @@ function ConfirmedTrip() {
 						id="confirmed-dialog"
 						className="text-2xl font-semibold tracking-tight"
 					>
-						{panels[action][0]}
+						{action === "receipt"
+							? "Sample payment receipt"
+							: "Share a little. Keep the surprise."}
 					</h2>
 					<button
 						type="submit"
@@ -835,32 +917,48 @@ function ConfirmedTrip() {
 						×
 					</button>
 				</form>
-				<p className={`${muted} text-sm leading-relaxed`}>
-					{panels[action][1]}
-				</p>
-				{action === "share" && (
+				{action === "receipt" ? (
+					<SampleReceipt />
+				) : (
 					<>
-						<button
-							type="button"
-							className={`${lightButton} mt-4`}
-							onClick={async () => {
-								try {
-									await navigator.clipboard.writeText(shareSummary);
-									setCopyStatus("Summary copied.");
-								} catch {
-									setCopyStatus(
-										"Clipboard unavailable. You can select and copy the summary above.",
-									);
-								}
-							}}
+						<p className={`${muted} text-sm leading-relaxed`}>
+							Only the date, destination and group size are included.
+							Activities, hotel, prices and personal details stay private.
+						</p>
+						<p className="mt-5 rounded-lg bg-[#e9f3ff] p-4 text-sm leading-relaxed whitespace-pre-line">
+							{shareSummary}
+						</p>
+						<div className="mt-5 flex flex-wrap gap-3">
+							<button
+								type="button"
+								className={blueButton}
+								onClick={async () => {
+									try {
+										await navigator.clipboard.writeText(shareSummary);
+										setCopyStatus("Summary copied.");
+									} catch {
+										setCopyStatus(
+											"Clipboard unavailable. Select the summary above or download the text.",
+										);
+									}
+								}}
+							>
+								Copy summary <Icon name="share" className="size-4" />
+							</button>
+							<a
+								href={shareDownload}
+								download="journey-forge-trip-summary.txt"
+								className={lightButton}
+							>
+								Download text
+							</a>
+						</div>
+						<p
+							role="status"
+							className={copyStatus ? `${muted} mt-3 text-sm` : "sr-only"}
 						>
-							Copy sample summary
-						</button>
-						{copyStatus && (
-							<p role="status" className="mt-2 text-sm">
-								{copyStatus}
-							</p>
-						)}
+							{copyStatus}
+						</p>
 					</>
 				)}
 			</dialog>

@@ -78,6 +78,8 @@ export default function Dashboard({
 	reviewStep,
 	profileTab,
 	notificationView,
+	emptyNotificationPreview,
+	dashboardView,
 }: {
 	exploring?: boolean;
 	detail?: Experience;
@@ -93,6 +95,8 @@ export default function Dashboard({
 	reviewStep?: ReviewStep;
 	profileTab?: ProfileTab;
 	notificationView?: "all" | "unread";
+	emptyNotificationPreview?: boolean;
+	dashboardView?: "today";
 }) {
 	const navigate = useNavigate();
 	const email = getDemoSession() ?? "";
@@ -106,6 +110,8 @@ export default function Dashboard({
 	const dialog = useRef<HTMLDialogElement>(null);
 	const prompt = useRef<HTMLTextAreaElement>(null);
 	const trip = data.trip;
+	const tripToday = dashboardView === "today";
+	const hasDraft = Boolean(dashboard.draft.trim() || dashboard.planner);
 	const filtered = data.experiences.filter(
 		(entry) => !filter || entry.categories.includes(filter),
 	);
@@ -264,6 +270,7 @@ export default function Dashboard({
 					<Notifications
 						email={email}
 						unreadOnly={notificationView === "unread"}
+						emptyPreview={emptyNotificationPreview}
 					/>
 				</Suspense>
 			) : profileTab ? (
@@ -467,47 +474,84 @@ export default function Dashboard({
 									id="dashboard-title"
 									className="mt-4 max-w-[14ch] text-[clamp(2.55rem,3.9vw,3.8rem)] leading-none font-medium tracking-[-0.055em]"
 								>
-									{trip.title}
+									{tripToday ? (
+										trip.title
+									) : hasDraft ? (
+										<>
+											A good day,
+											<br />
+											in the making.
+										</>
+									) : (
+										<>
+											Your next day.
+											<br />
+											Your own way.
+										</>
+									)}
 								</h1>
 								<p className="mt-5 text-lg tablet:text-[1.4rem]">
-									Tomorrow · {trip.guestCount} guests
+									{tripToday
+										? `Today · ${trip.guestCount} guests`
+										: hasDraft
+											? "A little closer to getting away."
+											: "Mauritius is waiting for you."}
 								</p>
-								<span className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-[#fffde8] px-3 py-2 text-sm font-semibold text-[#00665b]">
-									<Icon name="check" className="size-[1.05rem]" />
-									{trip.status}
-								</span>
+								{tripToday && (
+									<span className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-[#fffde8] px-3 py-2 text-sm font-semibold text-[#00665b]">
+										<Icon name="check" className="size-[1.05rem]" />
+										{trip.status}
+									</span>
+								)}
 							</div>
-							<div className="grid items-center gap-4 px-5 py-5 tablet:grid-cols-[1fr_0.85fr_1.65fr_auto] tablet:px-8">
-								{(
-									[
-										{ label: "Date", value: trip.date, icon: "calendar" },
-										{ label: "Pickup", value: trip.pickup, icon: "clock" },
-										{
-											label: "Meeting point",
-											value: trip.meeting,
-											icon: "pin",
-										},
-									] as const
-								).map(({ label, value, icon }) => (
-									<div
-										key={label}
-										className="flex items-center gap-3 tablet:border-r tablet:border-[#dbeaff] tablet:pr-3"
-									>
-										<Icon name={icon} className="size-7 shrink-0 text-ocean" />
-										<div>
-											<p className={`${muted} text-sm`}>{label}</p>
-											<p className="mt-1 font-semibold">{value}</p>
+							{tripToday ? (
+								<div className="grid items-center gap-4 px-5 py-5 tablet:grid-cols-[1fr_0.85fr_1.65fr_auto] tablet:px-8">
+									{(
+										[
+											{ label: "Date", value: trip.date, icon: "calendar" },
+											{ label: "Pickup", value: trip.pickup, icon: "clock" },
+											{
+												label: "Meeting point",
+												value: trip.meeting,
+												icon: "pin",
+											},
+										] as const
+									).map(({ label, value, icon }) => (
+										<div
+											key={label}
+											className="flex items-center gap-3 tablet:border-r tablet:border-[#dbeaff] tablet:pr-3"
+										>
+											<Icon
+												name={icon}
+												className="size-7 shrink-0 text-ocean"
+											/>
+											<div>
+												<p className={`${muted} text-sm`}>{label}</p>
+												<p className="mt-1 font-semibold">{value}</p>
+											</div>
 										</div>
-									</div>
-								))}
-								<button
-									type="button"
-									className={primary}
-									onClick={() => openPanel("trip")}
-								>
-									View trip <Icon name="next" className="size-4" />
-								</button>
-							</div>
+									))}
+									<button
+										type="button"
+										className={primary}
+										onClick={() => openPanel("trip")}
+									>
+										View trip <Icon name="next" className="size-4" />
+									</button>
+								</div>
+							) : (
+								<div className="flex flex-wrap items-center justify-between gap-4 px-5 py-5 tablet:px-8">
+									<p className={`${muted} text-sm`}>
+										{hasDraft
+											? "Pick up where you left off."
+											: "Start with a place, a mood or a moment."}
+									</p>
+									<Link to="/trips/plan" className={primary}>
+										{hasDraft ? "Continue planning" : "Plan a trip"}
+										<Icon name="next" className="size-4" />
+									</Link>
+								</div>
+							)}
 						</section>
 						<section
 							className={`${card} min-w-0 p-5 tablet:p-7`}
@@ -586,22 +630,35 @@ export default function Dashboard({
 							className={`${card} flex items-center gap-4 bg-[#e9f3ff]! p-5 tablet:gap-7 tablet:px-7`}
 						>
 							<span className="grid size-[clamp(3rem,5.4vw,5rem)] shrink-0 place-items-center rounded-full bg-[#d9eaff] text-ocean">
-								<Icon name="car" className="size-8" />
+								<Icon name={tripToday ? "car" : "sun"} className="size-8" />
 							</span>
 							<div>
 								<h2 className="text-lg font-semibold tracking-tight">
-									Your pickup is confirmed
+									{tripToday
+										? "Your pickup is confirmed"
+										: "Good days start with an idea"}
 								</h2>
 								<p className={`${muted} mt-1 text-sm`}>
-									Meet your driver at the hotel entrance.
+									{tripToday
+										? "Meet your driver at the hotel entrance."
+										: "A quiet beach, a new trail, a table for two."}
 								</p>
-								<button
-									type="button"
-									className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-ocean hover:underline"
-									onClick={() => openPanel("pickup")}
-								>
-									View details <Icon name="next" className="size-4" />
-								</button>
+								{tripToday ? (
+									<button
+										type="button"
+										className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-ocean hover:underline"
+										onClick={() => openPanel("pickup")}
+									>
+										View details <Icon name="next" className="size-4" />
+									</button>
+								) : (
+									<Link
+										to="/trips/plan"
+										className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-ocean hover:underline"
+									>
+										Make it yours <Icon name="next" className="size-4" />
+									</Link>
+								)}
 							</div>
 						</section>
 						<section

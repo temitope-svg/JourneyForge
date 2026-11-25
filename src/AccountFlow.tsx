@@ -21,6 +21,38 @@ declare module "@tanstack/react-router" {
 
 const secondaryLink = `${textButton} text-sm text-ink/80`;
 
+const resetLinkStates = {
+	expired: {
+		title: ["That link has", "had its day."],
+		description:
+			"Your reset link has expired. Request a new one to keep going.",
+		label: "Expired",
+	},
+	invalid: {
+		title: ["Let’s try", "another link."],
+		description: "We can’t verify this reset link. Request a new one below.",
+		label: "Invalid",
+	},
+	used: {
+		title: ["One link.", "One fresh start."],
+		description:
+			"This reset link has already been used. Sign in, or request another link.",
+		label: "Already used",
+	},
+} as const;
+
+export type ResetLinkState = keyof typeof resetLinkStates;
+
+export function validateResetSearch(search: Record<string, unknown>): {
+	status?: ResetLinkState;
+} {
+	const { status } = search;
+	if (status === undefined) return {};
+	return {
+		status: status === "expired" || status === "used" ? status : "invalid",
+	};
+}
+
 function Heading({
 	children,
 	description,
@@ -251,6 +283,23 @@ export function RecoveryEmailSent() {
 			<Link to="/reset-password" className={`${accountButton} mt-6`}>
 				Preview the reset form <Arrow />
 			</Link>
+			<nav
+				aria-label="Reset link previews"
+				className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm"
+			>
+				<span className="text-ink/75">Preview link states</span>
+				{(Object.keys(resetLinkStates) as ResetLinkState[]).map((status) => (
+					<Link
+						key={status}
+						to="/reset-password"
+						search={{ status }}
+						state={{ previewEmail: email }}
+						className={secondaryLink}
+					>
+						{resetLinkStates[status].label}
+					</Link>
+				))}
+			</nav>
 			<div className="mt-5 flex justify-between gap-4 border-b border-ink/20 pb-6 text-sm">
 				<Link
 					to="/password-recovery"
@@ -341,7 +390,33 @@ function ResetField({
 	);
 }
 
-export function ResetPassword() {
+export function ResetPassword({ status }: { status?: ResetLinkState }) {
+	const email = useLocation({
+		select: (location) => location.state.previewEmail,
+	});
+	if (!status) return <ResetPasswordForm />;
+
+	const { title, description } = resetLinkStates[status];
+	return (
+		<AccountLayout flow center>
+			<Heading description={description}>
+				{title[0]}
+				<br />
+				{title[1]}
+			</Heading>
+			<Link
+				to="/password-recovery"
+				state={{ previewEmail: email }}
+				className={`${accountButton} mt-7`}
+			>
+				Request a new link <Arrow />
+			</Link>
+			<BackToSignIn />
+		</AccountLayout>
+	);
+}
+
+function ResetPasswordForm() {
 	const navigate = useNavigate();
 	const password = useRef<HTMLInputElement>(null);
 	const confirmation = useRef<HTMLInputElement>(null);

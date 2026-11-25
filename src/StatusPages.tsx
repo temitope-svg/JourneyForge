@@ -81,6 +81,12 @@ function OfflineDetails() {
 					</Link>{" "}
 					to check your plans.
 				</p>
+				<Link
+					to="/offline/saved-example"
+					className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-ocean underline underline-offset-2"
+				>
+					Preview downloaded example
+				</Link>
 			</section>
 		</div>
 	);

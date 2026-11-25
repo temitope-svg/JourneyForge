@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { blueButton, box, lightButton, muted, textLink } from "./BookingLayout";
 import { Icon } from "./DashboardIcon";
 
@@ -246,80 +247,152 @@ export default function SharedStates({
 	const details = view === "loading" ? undefined : viewsDetails[view];
 
 	return (
+		<SharedStateLayout>
+			<div
+				className={`${box} mb-6 flex flex-wrap items-center gap-3 px-4 py-3 text-xs`}
+			>
+				<p className={muted}>Shared state preview — no live service event</p>
+				<label className="flex items-center gap-2">
+					View
+					<select
+						value={view}
+						onChange={(event) => {
+							const next = Object.keys(views).find(
+								(key): key is SharedView => key === event.target.value,
+							);
+							if (next) onViewChange(next);
+						}}
+						className="min-h-10 rounded-lg border border-[#dbeaff] bg-white px-3"
+					>
+						{Object.entries(views).map(([key, label]) => (
+							<option key={key} value={key}>
+								{label}
+							</option>
+						))}
+					</select>
+				</label>
+				<button
+					type="button"
+					className="text-ocean underline"
+					onClick={onReturn}
+				>
+					Return to page
+				</button>
+			</div>
+
+			{view === "loading" ? (
+				<LoadingState onFinish={() => onAction("finish-loading")} />
+			) : (
+				details && (
+					<section
+						className={`${box} mx-auto mt-12 max-w-[46rem] px-5 py-12 text-center tablet:px-12`}
+					>
+						{"icon" in details ? (
+							<Icon
+								name={details.icon}
+								className="mx-auto mb-7 size-12 text-ocean"
+							/>
+						) : (
+							<p className="mx-auto mb-4 inline-flex items-center gap-2 rounded-lg bg-sun/30 px-3 py-2 text-xs">
+								<Icon name="moon" className="size-4" /> Offline state preview
+							</p>
+						)}
+						<h1 className={heading}>{details.title}</h1>
+						<p
+							className={`${muted} mx-auto mt-4 max-w-[52ch] text-sm leading-relaxed`}
+						>
+							{details.message}
+						</p>
+						<div className="mt-6 flex flex-wrap justify-center gap-3">
+							<StateActions view={view} onAction={onAction} />
+						</div>
+						{(view === "offline" ||
+							view === "signIn" ||
+							view === "expired") && (
+							<p
+								className={`${muted} mx-auto mt-4 max-w-[60ch] text-xs leading-relaxed`}
+							>
+								{notes[view]}
+							</p>
+						)}
+					</section>
+				)
+			)}
+		</SharedStateLayout>
+	);
+}
+
+function SharedStateLayout({ children }: { children: ReactNode }) {
+	return (
 		<div className="min-h-svh bg-linear-to-b from-white to-[#f5faff] text-[#102040]">
 			<SharedHeader />
 			<main className="mx-auto max-w-[100rem] px-4 pt-8 pb-16 tablet:px-14">
-				<div
-					className={`${box} mb-6 flex flex-wrap items-center gap-3 px-4 py-3 text-xs`}
-				>
-					<p className={muted}>Shared state preview — no live service event</p>
-					<label className="flex items-center gap-2">
-						View
-						<select
-							value={view}
-							onChange={(event) => {
-								const next = Object.keys(views).find(
-									(key): key is SharedView => key === event.target.value,
-								);
-								if (next) onViewChange(next);
-							}}
-							className="min-h-10 rounded-lg border border-[#dbeaff] bg-white px-3"
-						>
-							{Object.entries(views).map(([key, label]) => (
-								<option key={key} value={key}>
-									{label}
-								</option>
-							))}
-						</select>
-					</label>
-					<button
-						type="button"
-						className="text-ocean underline"
-						onClick={onReturn}
-					>
-						Return to page
-					</button>
-				</div>
-
-				{view === "loading" ? (
-					<LoadingState onFinish={() => onAction("finish-loading")} />
-				) : (
-					details && (
-						<section
-							className={`${box} mx-auto mt-12 max-w-[46rem] px-5 py-12 text-center tablet:px-12`}
-						>
-							{"icon" in details ? (
-								<Icon
-									name={details.icon}
-									className="mx-auto mb-7 size-12 text-ocean"
-								/>
-							) : (
-								<p className="mx-auto mb-4 inline-flex items-center gap-2 rounded-lg bg-sun/30 px-3 py-2 text-xs">
-									<Icon name="moon" className="size-4" /> Offline state preview
-								</p>
-							)}
-							<h1 className={heading}>{details.title}</h1>
-							<p
-								className={`${muted} mx-auto mt-4 max-w-[52ch] text-sm leading-relaxed`}
-							>
-								{details.message}
-							</p>
-							<div className="mt-6 flex flex-wrap justify-center gap-3">
-								<StateActions view={view} onAction={onAction} />
-							</div>
-							{(view === "offline" ||
-								view === "signIn" ||
-								view === "expired") && (
-								<p
-									className={`${muted} mx-auto mt-4 max-w-[60ch] text-xs leading-relaxed`}
-								>
-									{notes[view]}
-								</p>
-							)}
-						</section>
-					)
-				)}
+				{children}
 			</main>
 		</div>
+	);
+}
+
+const sampleTrip = {
+	title: "A day on the west coast",
+	reference: "Sample reference JF-DEMO-024",
+	pickup: "Pickup 08:30 · Hotel entrance",
+	note: "These are sample details for the offline preview.",
+};
+
+const sampleDownload = `data:text/plain;charset=utf-8,${encodeURIComponent(
+	["Journey Forge · Sample itinerary", ...Object.values(sampleTrip)].join("\n"),
+)}`;
+
+export function OfflineSavedExample() {
+	return (
+		<SharedStateLayout>
+			<div
+				className={`${box} flex flex-wrap items-center gap-3 px-4 py-3 text-xs`}
+			>
+				<p className={muted}>Shared state preview</p>
+				<span className="rounded-lg border border-[#dbeaff] px-3 py-2.5">
+					Offline
+				</span>
+				<Link to="/offline" className="text-ocean underline">
+					Return to page
+				</Link>
+			</div>
+			<section
+				className={`${box} mx-auto mt-12 max-w-[46rem] px-5 py-12 text-center tablet:px-12`}
+			>
+				<p className="mb-4 inline-flex items-center gap-2 rounded-lg bg-sun/30 px-3 py-2 text-xs">
+					<Icon name="moon" className="size-4" /> Offline state preview
+				</p>
+				<h1 className={heading}>Your downloaded trip.</h1>
+				<p className={`${muted} mt-4 text-sm leading-relaxed`}>
+					This is an example of a saved copy. Changes and live updates are
+					unavailable.
+				</p>
+				<section className="mt-6 space-y-3 rounded-xl bg-[#e9f3ff] p-5 text-left text-sm">
+					<h2 className="font-semibold">{sampleTrip.title}</h2>
+					<p className={muted}>{sampleTrip.reference}</p>
+					<p className={muted}>{sampleTrip.pickup}</p>
+					<p className={muted}>{sampleTrip.note}</p>
+				</section>
+				<div className="mt-6 flex flex-wrap justify-center gap-3">
+					<a
+						href={sampleDownload}
+						download="journey-forge-sample-itinerary.txt"
+						className={blueButton}
+					>
+						Download sample itinerary
+					</a>
+					<Link to="/offline" className={lightButton}>
+						Try reconnecting
+					</Link>
+				</div>
+				<p
+					className={`${muted} mx-auto mt-4 max-w-[60ch] text-xs leading-relaxed`}
+				>
+					{notes.offline}
+				</p>
+			</section>
+		</SharedStateLayout>
 	);
 }
